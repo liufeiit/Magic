@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans 
+    xmlns="http://www.itjiehun.com/schema/magic/service"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+        http://www.itjiehun.com/schema/magic/service http://www.itjiehun.com/schema/magic/service.xsd
+        http://www.itjiehun.com/schema/magic/service service-1.0.xsd">
+    
+    <services>
+    	<service>
+    		<configurer>
+    			<item key="ss">
+    				<ref service="ss"/>
+    			</item>
+    		</configurer>
+    		<property name="ss" ref="ss"/>
+    	</service>
+    </services>
+
+</beans:beans>
