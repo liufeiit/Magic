@@ -1,4 +1,2 @@
-http\://www.webmagic.com/schema/magic/dateFormat.xsd=org/springframework/samples/xml/dateFormat.xsd
-http\://www.foo.com/schema/component/component.xsd=org/springframework/samples/xml/component.xsd
-http\://www.foo.com/schema/jcache/jcache.xsd=org/springframework/samples/xml/prop.xsd
-http\://www.itjiehun.com/web/magic/service.xsd=org/springframework/samples/xml/service.xsd
+http\://www.itjiehun.com/schema/magic/springext/springext-1.0.xsd=META-INF/springext/springext-1.0.xsd
+http\://www.itjiehun.com/schema/magic/service-1.0.xsd=META-INF/service-1.0.xsd

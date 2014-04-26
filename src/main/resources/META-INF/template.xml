@@ -5,7 +5,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="
         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
-        http://www.itjiehun.com/schema/magic/service http://www.itjiehun.com/schema/magic/service.xsd
+        http://www.itjiehun.com/schema/magic/service http://www.itjiehun.com/schema/magic/service-1.0.xsd
         http://www.itjiehun.com/schema/magic/service service-1.0.xsd">
     
     <services>
