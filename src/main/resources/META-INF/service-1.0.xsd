@@ -10,9 +10,9 @@
 
 	<xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
 	<xsd:import namespace="http://www.springframework.org/schema/beans" 
-				schemaLocation="http://www.springframework.org/schema/beans/spring-beans-4.0.xsd" />
+				schemaLocation="http://www.springframework.org/schema/beans/spring-beans-4.0.xsd"/>
 	<xsd:import namespace="http://www.itjiehun.com/schema/magic/springext" 
-				schemaLocation="springext/springext-1.0.xsd" />
+				schemaLocation="springext/springext-1.0.xsd"/>
 
 	<xsd:annotation>
 		<xsd:documentation><![CDATA[
@@ -21,94 +21,126 @@
 	</xsd:annotation>
 
 	<xsd:complexType name="identifiedType" abstract="true">
-		<xsd:attribute name="id" type="xsd:string" use="required" />
+		<xsd:attribute name="id" type="xsd:string" use="required"/>
 	</xsd:complexType>
 
 	<xsd:element name="services">
 		<xsd:complexType>
 			<xsd:sequence>
 				<xsd:choice minOccurs="0" maxOccurs="unbounded">
-					<xsd:element ref="service" />
-					<xsd:any namespace="##other" processContents="strict" minOccurs="0" maxOccurs="unbounded" />
+					<xsd:element ref="service"/>
+					<xsd:any namespace="##other" processContents="strict" minOccurs="0" maxOccurs="unbounded"/>
 				</xsd:choice>
 			</xsd:sequence>
-			<xsd:anyAttribute namespace="##other" processContents="lax" />
+			<xsd:anyAttribute namespace="##other" processContents="lax"/>
 		</xsd:complexType>
 	</xsd:element>
-
-	<xsd:element name="service">
-		<xsd:complexType>
-			<xsd:complexContent>
-				<xsd:extension base="identifiedType">
-					<xsd:group ref="serviceElements" />
-					<xsd:attributeGroup ref="serviceAttributes" />
-				</xsd:extension>
-			</xsd:complexContent>
-		</xsd:complexType>
-	</xsd:element>
-
+	
+	<xsd:element name="service" type="serviceType"/>
+	
+	<xsd:complexType name="serviceType">
+		<xsd:complexContent>
+			<xsd:extension base="identifiedType">
+				<xsd:group ref="serviceElements"/>
+				<xsd:attributeGroup ref="serviceAttributes"/>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+	
 	<xsd:group name="serviceElements">
 		<xsd:sequence>
 			<xsd:choice minOccurs="0" maxOccurs="unbounded">
-				<xsd:element ref="property" />
-				<xsd:any namespace="##other" processContents="strict" minOccurs="0" maxOccurs="unbounded" />
+				<xsd:element ref="property"/>
+				<xsd:any namespace="##other" processContents="strict" minOccurs="0" maxOccurs="unbounded"/>
 			</xsd:choice>
 			<xsd:choice minOccurs="0" maxOccurs="1">
-				<xsd:element ref="configurer" />
-				<xsd:any namespace="##other" processContents="strict" minOccurs="0" maxOccurs="unbounded" />
+				<xsd:element ref="configurer"/>
+				<xsd:any namespace="##other" processContents="strict" minOccurs="0" maxOccurs="unbounded"/>
 			</xsd:choice>
 		</xsd:sequence>
 	</xsd:group>
 
 	<xsd:attributeGroup name="serviceAttributes">
-		<xsd:attribute name="name" type="xsd:string" />
-		<xsd:attribute name="class" type="xsd:string" />
-		<xsd:anyAttribute namespace="##other" processContents="lax" />
+		<xsd:attribute name="name" type="xsd:string"/>
+		<xsd:attribute name="class" type="xsd:string"/>
+		<xsd:attribute name="profile" type="xsd:string" use="optional"/>
+		<xsd:attribute name="lazy-init" type="xsd:boolean" default="true"/>
+		<xsd:attribute name="parent" type="xsd:string"/>
+		<xsd:attribute name="abstract" type="xsd:boolean" default="false"/>
+		<xsd:attribute name="depends-on" type="xsd:string"/>
+		<xsd:attribute name="autowire-candidate" type="xsd:boolean" default="true"/>
+		<xsd:attribute name="primary" type="xsd:boolean"/>
+		<xsd:attribute name="init-method" type="xsd:string"/>
+		<xsd:attribute name="destroy-method" type="xsd:string"/>
+		<xsd:attribute name="factory-method" type="xsd:string"/>
+		<xsd:attribute name="factory-bean" type="xsd:string"/>
+		<xsd:attribute name="autowire" default="byName">
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:NMTOKEN">
+					<xsd:enumeration value="default"/>
+					<xsd:enumeration value="no"/>
+					<xsd:enumeration value="byName"/>
+					<xsd:enumeration value="byType"/>
+					<xsd:enumeration value="constructor"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:attribute>
+		<xsd:attribute name="scope" default="singleton">
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:NMTOKEN">
+					<xsd:enumeration value="singleton"/>
+					<xsd:enumeration value="prototype"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:attribute>
+		<xsd:anyAttribute namespace="##other" processContents="lax"/>
 	</xsd:attributeGroup>
 
-	<xsd:element name="property" type="propertyType" />
+	<xsd:element name="property" type="propertyType"/>
 
 	<xsd:complexType name="propertyType">
 		<xsd:sequence>
 			<xsd:choice minOccurs="0" maxOccurs="1">
-				<xsd:element ref="service" />
-				<xsd:element ref="ref" />
-				<xsd:element ref="value" />
-				<xsd:any namespace="##other" processContents="strict" />
+				<xsd:element ref="service"/>
+				<xsd:element name="bean" type="springext:referenceableBeanType"/>
+				<xsd:element ref="ref"/>
+				<xsd:element ref="value"/>
+				<xsd:any namespace="##other" processContents="strict"/>
 			</xsd:choice>
 		</xsd:sequence>
-		<xsd:attribute name="name" type="xsd:string" use="required" />
-		<xsd:attribute name="ref" type="xsd:string" />
-		<xsd:attribute name="value" type="xsd:string" />
+		<xsd:attribute name="name" type="xsd:string" use="required"/>
+		<xsd:attribute name="ref" type="xsd:string"/>
+		<xsd:attribute name="value" type="xsd:string"/>
 	</xsd:complexType>
 
-	<xsd:element name="configurer">
-		<xsd:complexType>
-			<xsd:choice minOccurs="0" maxOccurs="unbounded">
-				<xsd:element ref="item" />
-				<xsd:any namespace="##other" processContents="strict" minOccurs="0" maxOccurs="unbounded" />
-			</xsd:choice>
-		</xsd:complexType>
-	</xsd:element>
+	<xsd:element name="configurer" type="configurerType"/>
+	
+	<xsd:complexType name="configurerType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element ref="item"/>
+			<xsd:any namespace="##other" processContents="strict" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:choice>
+	</xsd:complexType>
 
-	<xsd:element name="item">
-		<xsd:complexType>
-			<xsd:choice minOccurs="0" maxOccurs="1">
-				<xsd:element ref="ref" />
-				<xsd:element ref="value" />
-				<xsd:any namespace="##other" processContents="strict" />
-			</xsd:choice>
-			<xsd:attribute name="key" type="xsd:string" use="required" />
-			<xsd:attribute name="ref" type="xsd:string" />
-			<xsd:attribute name="value" type="xsd:string" />
-		</xsd:complexType>
-	</xsd:element>
+	<xsd:element name="item" type="itemType"/>
+	
+	<xsd:complexType name="itemType">
+		<xsd:choice minOccurs="0" maxOccurs="1">
+			<xsd:element ref="ref"/>
+			<xsd:element ref="value"/>
+			<xsd:any namespace="##other" processContents="strict"/>
+		</xsd:choice>
+		<xsd:attribute name="key" type="xsd:string" use="required"/>
+		<xsd:attribute name="ref" type="xsd:string"/>
+		<xsd:attribute name="value" type="xsd:string"/>
+	</xsd:complexType>
 
 	<xsd:element name="ref">
 		<xsd:complexType>
 			<xsd:complexContent>
 				<xsd:restriction base="xsd:anyType">
-					<xsd:attribute name="service" type="xsd:string" />
+					<xsd:attribute name="service" type="xsd:string"/>
+					<xsd:attribute name="bean" type="xsd:string"/>
 				</xsd:restriction>
 			</xsd:complexContent>
 		</xsd:complexType>
@@ -116,9 +148,8 @@
 
 	<xsd:element name="value">
 		<xsd:complexType mixed="true">
-			<xsd:choice minOccurs="0" maxOccurs="unbounded" />
-			<xsd:attribute name="type" type="xsd:string" />
+			<xsd:choice minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:attribute name="type" type="xsd:string"/>
 		</xsd:complexType>
 	</xsd:element>
-
 </xsd:schema>
