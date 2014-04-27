@@ -8,21 +8,18 @@
         http://www.itjiehun.com/schema/magic/service http://www.itjiehun.com/schema/magic/service-1.0.xsd
         http://www.itjiehun.com/schema/magic/service service-1.0.xsd">
     
-    <services>
-    	<service id="s" class="ss">
-    		<configurer>
-    			<item key="ss">
-    				<ref service="ss"/>
-    			</item>
-    		</configurer>
-    		<property name="ss" ref="ss"/>
-    		<property name="dd">
-    			<ref service="" bean="ss"/>
-    		</property>
-    		<property name="dd">
-    			<value type="dd">sd</value>
-    		</property>
-    	</service>
-    </services>
+    <service id="hello" class="magic.service.HelloService">
+    	<property name="name" value="刘飞"/>
+    	<property name="first-name" value="liu"/>
+    	<property name="service" ref="hello1"/>
+    	<configurer type="">
+    		
+    	</configurer>
+    </service>
+    
+    <service id="hello1" class="magic.service.HelloService">
+    	<property name="name" value="杨雪"/>
+    	<property name="first-name" value="yang"/>
+    </service>
 
 </beans:beans>

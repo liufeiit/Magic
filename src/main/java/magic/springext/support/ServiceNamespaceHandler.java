@@ -1,6 +1,12 @@
 package magic.springext.support;
 
+import java.util.Date;
+
+import magic.service.HelloService;
+
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  * Spring Extension Service schema Handler.
@@ -11,8 +17,14 @@ import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
  */
 public class ServiceNamespaceHandler extends NamespaceHandlerSupport {
 
+	public static void main(String[] args) {
+		ApplicationContext context = new ClassPathXmlApplicationContext("/META-INF/service-demo.xml");
+		HelloService helloService = context.getBean("hello", HelloService.class);
+		System.out.println(helloService.say());
+	}
+	
 	@Override
 	public void init() {
-		registerBeanDefinitionParser("services", new ServiceBeanDefinitionParser());
+		registerBeanDefinitionParser("service", new ServiceBeanDefinitionParser());
 	}
 }

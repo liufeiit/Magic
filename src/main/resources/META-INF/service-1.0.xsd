@@ -120,8 +120,9 @@
 			<xsd:element ref="item"/>
 			<xsd:any namespace="##other" processContents="strict" minOccurs="0" maxOccurs="unbounded"/>
 		</xsd:choice>
+		<xsd:attribute name="type" type="xsd:string" use="required"/>
 	</xsd:complexType>
-
+	
 	<xsd:element name="item" type="itemType"/>
 	
 	<xsd:complexType name="itemType">
