@@ -12,8 +12,8 @@
     	<property name="name" value="刘飞"/>
     	<property name="first-name" value="liu"/>
     	<property name="service" ref="hello1"/>
-    	<configurer type="">
-    		
+    	<configurer>
+    		<item key="ds" ref="hello"/>
     	</configurer>
     </service>
     

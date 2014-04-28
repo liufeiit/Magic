@@ -1,16 +1,18 @@
 package magic.springext.support;
 
+import magic.service.HelloService;
+
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.AbstractBeanDefinitionParser;
 import org.springframework.beans.factory.xml.ParserContext;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.core.Conventions;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
@@ -22,6 +24,12 @@ import org.w3c.dom.NodeList;
  */
 public class ServiceBeanDefinitionParser extends AbstractBeanDefinitionParser {
 
+	public static void main(String[] args) {
+		ApplicationContext context = new ClassPathXmlApplicationContext("/META-INF/service-demo.xml");
+		HelloService helloService = context.getBean("hello", HelloService.class);
+		System.out.println(helloService.say());
+	}
+	
 	@Override
 	protected AbstractBeanDefinition parseInternal(Element element, ParserContext parserContext) {
 		String id = element.getAttribute("id");
@@ -48,7 +56,8 @@ public class ServiceBeanDefinitionParser extends AbstractBeanDefinitionParser {
 			}
 		}
 		AbstractBeanDefinition beanDefinition = service.getBeanDefinition();
-		parserContext.getRegistry().registerBeanDefinition(id, beanDefinition);
+		System.out.println("Registry : " + (parserContext.getRegistry()));
+//		parserContext.getRegistry().registerBeanDefinition(id, beanDefinition);
 		return beanDefinition;
 	}
 }
