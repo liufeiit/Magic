@@ -2,13 +2,9 @@ package magic.springext.support;
 
 import magic.service.HelloService;
 
-import org.springframework.beans.BeanMetadataAttribute;
-import org.springframework.beans.BeanMetadataAttributeAccessor;
 import org.springframework.beans.FatalBeanException;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
-import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.beans.factory.xml.AbstractBeanDefinitionParser;
 import org.springframework.beans.factory.xml.ParserContext;
@@ -18,7 +14,6 @@ import org.springframework.core.Conventions;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
@@ -30,7 +25,7 @@ import org.w3c.dom.NodeList;
  */
 public class ServiceBeanDefinitionParser extends AbstractBeanDefinitionParser {
 
-	public static final String BEANS_NAMESPACE_URI = "http://www.springframework.org/schema/beans";
+	public static final String BEANS_NAMESPACE_URI = "http://www.itjiehun.com/schema/magic/service";
 
 	private static final ClassLoader CLASS_LOADER = Thread.currentThread().getContextClassLoader();
 
@@ -107,6 +102,7 @@ public class ServiceBeanDefinitionParser extends AbstractBeanDefinitionParser {
 		int len = props.getLength();
 		for (int i = 0; i < len; i++) {
 			Element e = Element.class.cast(props.item(i));
+			System.out.println("nsuri : " + e.getNamespaceURI());
 			String propertyName = Conventions.attributeNameToPropertyName(e.getAttribute("name"));
 			String propertyValue = e.getAttribute("value");
 			String propertyRef = e.getAttribute("ref");
@@ -226,17 +222,6 @@ public class ServiceBeanDefinitionParser extends AbstractBeanDefinitionParser {
 		} catch (LinkageError err) {
 			throw new FatalBeanException("Invalid Service class [" + className
 					+ "] for nServiceBeanDefinitionParser: problem with handler class file or dependent class", err);
-		}
-	}
-
-	private int parse(String str, int defaultValue) {
-		if (str == null || str.isEmpty()) {
-			return defaultValue;
-		}
-		try {
-			return Integer.parseInt(str);
-		} catch (Exception e) {
-			return defaultValue;
 		}
 	}
 
