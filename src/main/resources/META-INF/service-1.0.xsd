@@ -84,10 +84,10 @@
 		<xsd:attribute name="destroy-method" type="xsd:string"/>
 		<xsd:attribute name="factory-method" type="xsd:string"/>
 		<xsd:attribute name="factory-bean" type="xsd:string"/>
+		<xsd:attribute name="dependency-check" type="xsd:string"/>
 		<xsd:attribute name="autowire" default="byName">
 			<xsd:simpleType>
 				<xsd:restriction base="xsd:NMTOKEN">
-					<xsd:enumeration value="default"/>
 					<xsd:enumeration value="no"/>
 					<xsd:enumeration value="byName"/>
 					<xsd:enumeration value="byType"/>
