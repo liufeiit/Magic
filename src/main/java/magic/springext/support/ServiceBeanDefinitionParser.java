@@ -30,6 +30,8 @@ import org.w3c.dom.NodeList;
  */
 public class ServiceBeanDefinitionParser extends AbstractBeanDefinitionParser {
 
+	public static final String BEANS_NAMESPACE_URI = "http://www.springframework.org/schema/beans";
+
 	private static final ClassLoader CLASS_LOADER = Thread.currentThread().getContextClassLoader();
 
 	public static final String TRUE_VALUE = "true";
@@ -55,6 +57,11 @@ public class ServiceBeanDefinitionParser extends AbstractBeanDefinitionParser {
 	public static final String FACTORY_BEAN_ATTRIBUTE = "factory-bean";
 	public static final String AUTOWIRE_ATTRIBUTE = "autowire";
 	public static final String SCOPE_ATTRIBUTE = "scope";
+
+	public static final String PROPERTY_ELEMENT = "property";
+	public static final String REF_ATTRIBUTE = "ref";
+	public static final String VALUE_ATTRIBUTE = "value";
+	public static final String REF_ELEMENT = "ref";
 
 	public static void main(String[] args) {
 		ApplicationContext context = new ClassPathXmlApplicationContext("/META-INF/service-demo.xml");
