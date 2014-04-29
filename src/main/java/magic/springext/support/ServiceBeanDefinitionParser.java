@@ -35,7 +35,7 @@ public class ServiceBeanDefinitionParser extends AbstractBeanDefinitionParser {
 	public static final String DEPENDENCY_CHECK_ALL_ATTRIBUTE_VALUE = "all";
 	public static final String DEPENDENCY_CHECK_SIMPLE_ATTRIBUTE_VALUE = "simple";
 	public static final String DEPENDENCY_CHECK_OBJECTS_ATTRIBUTE_VALUE = "objects";
-	
+
 	public static final String MULTI_VALUE_ATTRIBUTE_DELIMITERS = ",; ";
 
 	public static final String CLASS_ATTRIBUTE = "class";
@@ -54,9 +54,15 @@ public class ServiceBeanDefinitionParser extends AbstractBeanDefinitionParser {
 	public static final String SCOPE_ATTRIBUTE = "scope";
 
 	public static final String PROPERTY_ELEMENT = "property";
+	public static final String NAME_ATTRIBUTE = "name";
+	public static final String CONFIGURER_ELEMENT = "configurer";
+	public static final String KEY_ATTRIBUTE = "key";
+	public static final String ITEM_ELEMENT = "item";
+	public static final String SERVICE_ATTRIBUTE = "service";
+	public static final String BEAN_ATTRIBUTE = "bean";
+	public static final String REF_ELEMENT = "ref";
 	public static final String REF_ATTRIBUTE = "ref";
 	public static final String VALUE_ATTRIBUTE = "value";
-	public static final String REF_ELEMENT = "ref";
 
 	public static void main(String[] args) {
 		ApplicationContext context = new ClassPathXmlApplicationContext("/META-INF/service-demo.xml");
@@ -89,15 +95,17 @@ public class ServiceBeanDefinitionParser extends AbstractBeanDefinitionParser {
 			definition.setPrimary(TRUE_VALUE.equals(element.getAttribute(PRIMARY_ATTRIBUTE)));
 		}
 		definition.setScope(getScope(element, parserContext));
-		
-		//BeanDefinitionParserDelegate
-//		parseLookupOverrideSubElements(element, definition.getMethodOverrides());
-//		parseReplacedMethodSubElements(element, definition.getMethodOverrides());
-//
-//		parseConstructorArgElements(element, definition);
-//		parsePropertyElements(element, definition);
-//		parseQualifierElements(element, definition);
-		
+		// BeanDefinitionParserDelegate
+		parseConfigurerElement(element, parserContext, definition);
+		parsePropertyElements(element, parserContext, definition);
+		return definition;
+	}
+
+	protected void parseConfigurerElement(Element element, ParserContext parserContext, GenericBeanDefinition definition) {
+
+	}
+
+	protected void parsePropertyElements(Element element, ParserContext parserContext, GenericBeanDefinition definition) {
 		NodeList props = element.getElementsByTagName("property");
 		int len = props.getLength();
 		for (int i = 0; i < len; i++) {
@@ -112,11 +120,10 @@ public class ServiceBeanDefinitionParser extends AbstractBeanDefinitionParser {
 				definition.getPropertyValues().add(propertyName, propertyValue);
 			}
 		}
-		return definition;
 	}
 
 	protected int getDependencyCheck(Element element, ParserContext parserContext) {
-		if(!element.hasAttribute(DEPENDENCY_CHECK_ATTRIBUTE)) {
+		if (!element.hasAttribute(DEPENDENCY_CHECK_ATTRIBUTE)) {
 			return AbstractBeanDefinition.DEPENDENCY_CHECK_NONE;
 		}
 		String dependencyCheck = element.getAttribute(DEPENDENCY_CHECK_ATTRIBUTE);
