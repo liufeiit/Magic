@@ -1,12 +1,30 @@
 package magic.springext.support;
 
-import magic.service.HelloService;
+import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
+import magic.service.HelloService;
+import magic.service.Service;
+
+import org.apache.commons.configuration.MapConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.FatalBeanException;
+import org.springframework.beans.PropertyValue;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
+import org.springframework.beans.factory.config.TypedStringValue;
+import org.springframework.beans.factory.parsing.BeanEntry;
+import org.springframework.beans.factory.parsing.ParseState;
+import org.springframework.beans.factory.parsing.PropertyEntry;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.beans.factory.xml.AbstractBeanDefinitionParser;
+import org.springframework.beans.factory.xml.BeanDefinitionParserDelegate;
 import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -14,16 +32,22 @@ import org.springframework.core.Conventions;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
  * Spring Extension Service XML Parser.
+ * 
+ * @see BeanDefinitionParserDelegate
+ *      {@link BeanDefinitionParserDelegate#parseBeanDefinitionElement(Element)}
  * 
  * @author 刘飞 E-mail:liufei_it@126.com
  * @version 1.0
  * @since 2014年4月26日 下午2:33:48
  */
 public class ServiceBeanDefinitionParser extends AbstractBeanDefinitionParser {
+
+	protected final Logger log = LoggerFactory.getLogger(getClass());
 
 	public static final String BEANS_NAMESPACE_URI = "http://www.itjiehun.com/schema/magic/service";
 
@@ -59,10 +83,11 @@ public class ServiceBeanDefinitionParser extends AbstractBeanDefinitionParser {
 	public static final String KEY_ATTRIBUTE = "key";
 	public static final String ITEM_ELEMENT = "item";
 	public static final String SERVICE_ATTRIBUTE = "service";
-	public static final String BEAN_ATTRIBUTE = "bean";
 	public static final String REF_ELEMENT = "ref";
 	public static final String REF_ATTRIBUTE = "ref";
 	public static final String VALUE_ATTRIBUTE = "value";
+
+	private final ParseState parseState = new ParseState();
 
 	public static void main(String[] args) {
 		ApplicationContext context = new ClassPathXmlApplicationContext("/META-INF/service-demo.xml");
@@ -70,10 +95,30 @@ public class ServiceBeanDefinitionParser extends AbstractBeanDefinitionParser {
 		System.out.println(helloService.say());
 	}
 
+	public static void main1(String[] args) {
+		System.out.println("getProperties : " + System.getProperties());
+		System.out.println();
+		System.out.println("getenv : " + System.getenv());
+	}
+
 	@Override
 	protected AbstractBeanDefinition parseInternal(Element element, ParserContext parserContext) {
-		Class<?> beanClass = getBeanClass(element, parserContext);
-		GenericBeanDefinition definition = new GenericBeanDefinition();
+		parseState.push(new BeanEntry(element.getAttribute(ID_ATTRIBUTE)));
+		GenericBeanDefinition definition = null;
+		try {
+			Class<?> beanClass = getBeanClass(element, parserContext);
+			definition = new GenericBeanDefinition();
+			parseBeanDefinitionAttributes(element, parserContext, beanClass, definition);
+			parseConfigurerElement(element, parserContext, definition);
+			parsePropertyElements(element, parserContext, definition);
+		} finally {
+			parseState.pop();
+		}
+		return definition;
+	}
+
+	protected void parseBeanDefinitionAttributes(Element element, ParserContext parserContext, Class<?> beanClass,
+			GenericBeanDefinition definition) {
 		definition.setBeanClass(beanClass);
 		definition.setAbstract(isAbstract(element, parserContext));
 		definition.setAutowireCandidate(isAutowireCandidate(element, parserContext));
@@ -95,31 +140,152 @@ public class ServiceBeanDefinitionParser extends AbstractBeanDefinitionParser {
 			definition.setPrimary(TRUE_VALUE.equals(element.getAttribute(PRIMARY_ATTRIBUTE)));
 		}
 		definition.setScope(getScope(element, parserContext));
-		// BeanDefinitionParserDelegate
-		parseConfigurerElement(element, parserContext, definition);
-		parsePropertyElements(element, parserContext, definition);
-		return definition;
 	}
 
-	protected void parseConfigurerElement(Element element, ParserContext parserContext, GenericBeanDefinition definition) {
-
-	}
-
-	protected void parsePropertyElements(Element element, ParserContext parserContext, GenericBeanDefinition definition) {
-		NodeList props = element.getElementsByTagName("property");
-		int len = props.getLength();
-		for (int i = 0; i < len; i++) {
-			Element e = Element.class.cast(props.item(i));
-			System.out.println("nsuri : " + e.getNamespaceURI());
-			String propertyName = Conventions.attributeNameToPropertyName(e.getAttribute("name"));
-			String propertyValue = e.getAttribute("value");
-			String propertyRef = e.getAttribute("ref");
-			if (!StringUtils.isEmpty(propertyRef)) {
-				definition.getPropertyValues().add(propertyName, new RuntimeBeanReference(propertyRef));
-			} else {
-				definition.getPropertyValues().add(propertyName, propertyValue);
-			}
+	protected void parseConfigurerElement(Element element, ParserContext parserContext, BeanDefinition definition) {
+		NodeList itemElements = element.getElementsByTagName(ITEM_ELEMENT);
+		int len = itemElements.getLength();
+		if (len <= 0) {
+			return;
 		}
+		for (int i = 0; i < len; i++) {
+			Node itemElement = itemElements.item(i);
+			if (!isCandidateElement(itemElement)) {
+				continue;
+			}
+			Map<String, Object> env = new HashMap<String, Object>();
+			env.putAll(System.getenv());
+			env.putAll(convertPropertiesToMap(System.getProperties()));
+			MapConfiguration configuration = new MapConfiguration(env);
+			configuration.setProperty(Service.SERVICE_REGISTRY, parserContext.getRegistry());
+			configuration.setProperty(Service.SERVICE_DEFINITION, definition);
+			Element item = (Element) itemElement;
+			String key = item.getAttribute(KEY_ATTRIBUTE);
+			Object val = parseItemValue(item, parserContext);
+		}
+	}
+
+	private Object parseItemValue(Element item, ParserContext parserContext) {
+		return null;
+	}
+
+	private Map<String, Object> convertPropertiesToMap(final Properties props) {
+		return new AbstractMap<String, Object>() {
+			@Override
+			public Set<Map.Entry<String, Object>> entrySet() {
+				Set<Map.Entry<String, Object>> entries = new HashSet<Map.Entry<String, Object>>();
+				for (final Map.Entry<Object, Object> propertyEntry : props.entrySet()) {
+					if (propertyEntry.getKey() instanceof String) {
+						entries.add(new Map.Entry<String, Object>() {
+							public String getKey() {
+								return propertyEntry.getKey().toString();
+							}
+							public Object getValue() {
+								return propertyEntry.getValue();
+							}
+							public Object setValue(Object value) {
+								throw new UnsupportedOperationException();
+							}
+						});
+					}
+				}
+				return entries;
+			}
+		};
+	}
+
+	protected void parsePropertyElements(Element element, ParserContext parserContext, BeanDefinition definition) {
+		NodeList propertyElements = element.getElementsByTagName(PROPERTY_ELEMENT);
+		int len = propertyElements.getLength();
+		if (len <= 0) {
+			return;
+		}
+		for (int i = 0; i < len; i++) {
+			Node propertyElement = propertyElements.item(i);
+			if (!isCandidateElement(propertyElement)) {
+				continue;
+			}
+			parsePropertyElement((Element) propertyElement, definition);
+		}
+	}
+
+	protected void parsePropertyElement(Element propertyElement, BeanDefinition definition) {
+		String propertyName = propertyElement.getAttribute(NAME_ATTRIBUTE);
+		propertyName = Conventions.attributeNameToPropertyName(propertyName);
+		if (!StringUtils.hasLength(propertyName)) {
+			log.error("Tag 'property' must have a 'name' attribute");
+			return;
+		}
+		parseState.push(new PropertyEntry(propertyName));
+		try {
+			if (definition.getPropertyValues().contains(propertyName)) {
+				log.error("Multiple 'property' definitions for property '" + propertyName + "'");
+				return;
+			}
+			Object val = parsePropertyValue(propertyElement, definition, propertyName);
+			PropertyValue pv = new PropertyValue(propertyName, val);
+			definition.getPropertyValues().addPropertyValue(pv);
+		} finally {
+			parseState.pop();
+		}
+	}
+
+	protected Object parsePropertyValue(Element propertyElement, BeanDefinition definition, String propertyName) {
+		NodeList subNode = propertyElement.getElementsByTagName(REF_ELEMENT);
+		Element subElement = null;
+		if (subNode.getLength() > 0) {
+			subElement = (Element) subNode.item(0);
+		}
+		boolean hasRefAttribute = propertyElement.hasAttribute(REF_ATTRIBUTE);
+		boolean hasValueAttribute = propertyElement.hasAttribute(VALUE_ATTRIBUTE);
+		if ((hasRefAttribute && hasValueAttribute) || ((hasRefAttribute || hasValueAttribute) && subElement != null)) {
+			log.error("<property> element for property '" + propertyName
+					+ "' is only allowed to contain either 'ref' attribute OR 'value' attribute OR sub-element");
+		}
+		if (hasRefAttribute) {
+			String refName = propertyElement.getAttribute(REF_ATTRIBUTE);
+			if (!StringUtils.hasText(refName)) {
+				log.error("<property> element for property '" + propertyName + "' contains empty 'ref' attribute");
+			}
+			RuntimeBeanReference ref = new RuntimeBeanReference(refName);
+			return ref;
+		} else if (hasValueAttribute) {
+			TypedStringValue valueHolder = new TypedStringValue(propertyElement.getAttribute(VALUE_ATTRIBUTE));
+			return valueHolder;
+		} else if (subElement != null) {
+			return parsePropertySubElement(subElement, definition);
+		} else {
+			log.error("<property> element for property '" + propertyName + "' must specify a ref or value");
+			return new TypedStringValue(null);
+		}
+	}
+
+	public Object parsePropertySubElement(Element subElement, BeanDefinition definition) {
+		boolean hasServiceAttribute = subElement.hasAttribute(SERVICE_ATTRIBUTE);
+		if (hasServiceAttribute) {
+			return new RuntimeBeanReference(subElement.getAttribute(SERVICE_ATTRIBUTE));
+		}
+		return new TypedStringValue(null);
+	}
+
+	protected boolean isDefaultNamespace(String namespaceUri) {
+		return (!StringUtils.hasLength(namespaceUri) || BEANS_NAMESPACE_URI.equals(namespaceUri));
+	}
+
+	protected boolean isDefaultNamespace(Node node) {
+		return isDefaultNamespace(getNamespaceURI(node));
+	}
+
+	protected String getNamespaceURI(Node node) {
+		return node.getNamespaceURI();
+	}
+
+	protected String getLocalName(Node node) {
+		return node.getLocalName();
+	}
+
+	protected boolean isCandidateElement(Node node) {
+		return (node instanceof Element && (isDefaultNamespace(node) || !isDefaultNamespace(node.getParentNode())));
 	}
 
 	protected int getDependencyCheck(Element element, ParserContext parserContext) {

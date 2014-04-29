@@ -110,7 +110,6 @@
 			<xsd:complexContent>
 				<xsd:restriction base="xsd:anyType">
 					<xsd:attribute name="service" type="xsd:string"/>
-					<xsd:attribute name="bean" type="xsd:string"/>
 				</xsd:restriction>
 			</xsd:complexContent>
 		</xsd:complexType>
