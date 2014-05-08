@@ -22,6 +22,7 @@ import org.springframework.beans.factory.parsing.BeanEntry;
 import org.springframework.beans.factory.parsing.ParseState;
 import org.springframework.beans.factory.parsing.PropertyEntry;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.beans.factory.xml.AbstractBeanDefinitionParser;
 import org.springframework.beans.factory.xml.BeanDefinitionParserDelegate;
@@ -143,29 +144,92 @@ public class ServiceBeanDefinitionParser extends AbstractBeanDefinitionParser {
 	}
 
 	protected void parseConfigurerElement(Element element, ParserContext parserContext, BeanDefinition definition) {
-		NodeList itemElements = element.getElementsByTagName(ITEM_ELEMENT);
+		NodeList configurerElement = element.getElementsByTagName(CONFIGURER_ELEMENT);
+		if(configurerElement.getLength() <= 0) {
+			return;
+		}
+		NodeList itemElements = ((Element) configurerElement.item(0)).getElementsByTagName(ITEM_ELEMENT);
 		int len = itemElements.getLength();
 		if (len <= 0) {
 			return;
 		}
+		Map<String, Object> env = new HashMap<String, Object>();
+		env.putAll(System.getenv());
+		env.putAll(convertPropertiesToMap(System.getProperties()));
+		MapConfiguration configuration = new MapConfiguration(env) {
+			@Override
+			public Object getProperty(String key) {
+				Object val = super.getProperty(key);
+				try {
+					if(val instanceof RuntimeBeanReference) {
+						if(containsKey(Service.SERVICE_REGISTRY)) {
+							DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) super.getProperty(Service.SERVICE_REGISTRY);
+							RuntimeBeanReference ref = (RuntimeBeanReference) val;
+							return beanFactory.getBean(ref.getBeanName());
+						}
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				return val;
+			}
+			
+		};
+		configuration.setProperty(Service.SERVICE_REGISTRY, parserContext.getRegistry());
+		configuration.setProperty(Service.SERVICE_DEFINITION, definition);
 		for (int i = 0; i < len; i++) {
 			Node itemElement = itemElements.item(i);
 			if (!isCandidateElement(itemElement)) {
 				continue;
 			}
-			Map<String, Object> env = new HashMap<String, Object>();
-			env.putAll(System.getenv());
-			env.putAll(convertPropertiesToMap(System.getProperties()));
-			MapConfiguration configuration = new MapConfiguration(env);
-			configuration.setProperty(Service.SERVICE_REGISTRY, parserContext.getRegistry());
-			configuration.setProperty(Service.SERVICE_DEFINITION, definition);
 			Element item = (Element) itemElement;
 			String key = item.getAttribute(KEY_ATTRIBUTE);
-			Object val = parseItemValue(item, parserContext);
+			if (!StringUtils.hasLength(key)) {
+				log.error("Tag 'item' must have a 'key' attribute");
+				continue;
+			}
+			Object val = parseItemValue(item, parserContext, key);
+			if(val == null) {
+				continue;
+			}
+			configuration.setProperty(key, val);
 		}
+		PropertyValue pv = new PropertyValue(CONFIGURER_ELEMENT, configuration);
+		definition.getPropertyValues().addPropertyValue(pv);
 	}
 
-	private Object parseItemValue(Element item, ParserContext parserContext) {
+	private Object parseItemValue(Element item, ParserContext parserContext, String key) {
+		NodeList subNode = item.getElementsByTagName(REF_ELEMENT);
+		Element subElement = null;
+		if (subNode.getLength() > 0) {
+			subElement = (Element) subNode.item(0);
+		}
+		boolean hasRefAttribute = item.hasAttribute(REF_ATTRIBUTE);
+		boolean hasValueAttribute = item.hasAttribute(VALUE_ATTRIBUTE);
+		if ((hasRefAttribute && hasValueAttribute) || ((hasRefAttribute || hasValueAttribute) && subElement != null)) {
+			log.error("<item> element for item '" + key
+					+ "' is only allowed to contain either 'ref' attribute OR 'value' attribute OR sub-element");
+		}
+		if (hasRefAttribute) {
+			String refName = item.getAttribute(REF_ATTRIBUTE);
+			if (!StringUtils.hasText(refName)) {
+				log.error("<item> element for property '" + key + "' contains empty 'ref' attribute");
+			}
+			return new RuntimeBeanReference(refName);
+//			return ((DefaultListableBeanFactory) parserContext.getRegistry()).getBean(refName);
+		} else if (hasValueAttribute) {
+			return item.getAttribute(VALUE_ATTRIBUTE);
+		} else if (subElement != null) {
+			boolean hasServiceAttribute = subElement.hasAttribute(SERVICE_ATTRIBUTE);
+			if (hasServiceAttribute) {
+				String refName = subElement.getAttribute(SERVICE_ATTRIBUTE);
+				return new RuntimeBeanReference(refName);
+//				return ((DefaultListableBeanFactory) parserContext.getRegistry()).getBean(refName);
+			}
+		} else {
+			log.error("<item> element for property '" + key + "' must specify a ref or value");
+			return null;
+		}
 		return null;
 	}
 
