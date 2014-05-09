@@ -15,8 +15,7 @@
     		<ref service="hello1"/>
     	</property>
     	<configurer>
-    		<item key="dsssssssssssssssssssssssssssssssssssssssssssss" ref="hello"/>
-    		<item key="dddddddddddddddddddddddddddddddddddddd" ref="hello1"/>
+    		<item key="ssssssssssssssss" value="ddd"/>
     	</configurer>
     </service>
     

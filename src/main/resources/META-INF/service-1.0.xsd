@@ -50,14 +50,8 @@
 	<xsd:element name="item" type="itemType"/>
 	
 	<xsd:complexType name="itemType">
-		<xsd:sequence>
-			<xsd:choice minOccurs="0" maxOccurs="1">
-				<xsd:element ref="ref"/>
-			</xsd:choice>
-		</xsd:sequence>
 		<xsd:attribute name="key" type="xsd:string" use="required"/>
-		<xsd:attribute name="ref" type="xsd:string"/>
-		<xsd:attribute name="value" type="xsd:string"/>
+		<xsd:attribute name="value" type="xsd:string" use="required"/>
 	</xsd:complexType>
 	
 	<xsd:complexType name="propertyType">

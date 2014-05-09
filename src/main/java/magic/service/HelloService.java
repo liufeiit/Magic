@@ -2,7 +2,8 @@ package magic.service;
 
 import java.util.Iterator;
 
-import org.apache.commons.configuration.Configuration;
+import magic.springext.service.Configuration;
+import magic.springext.service.Service;
 
 /**
  * 
@@ -13,45 +14,44 @@ import org.apache.commons.configuration.Configuration;
 public class HelloService implements Service {
 
 	private String name;
-	
+
 	private String firstName;
-	
+
 	private HelloService service;
-	
+
 	/**
-	 * @param name the name to set
+	 * @param name
+	 *            the name to set
 	 */
 	public void setName(String name) {
 		this.name = name;
 	}
-	
+
 	/**
-	 * @param firstName the firstName to set
+	 * @param firstName
+	 *            the firstName to set
 	 */
 	public void setFirstName(String firstName) {
 		this.firstName = firstName;
 	}
-	
+
 	/**
-	 * @param service the service to set
+	 * @param service
+	 *            the service to set
 	 */
 	public void setService(HelloService service) {
 		this.service = service;
 	}
-	
+
 	public String say() {
-		if(service != null)
-		return "Hello " + name + ", " + firstName + " | " + service.say();
+		if (service != null)
+			return "Hello " + name + ", " + firstName + " | " + service.say();
 		return "Hello " + name + ", " + firstName;
 	}
 
-	/**
-	 * @param configurer
-	 */
-	@Override
 	public void setConfigurer(Configuration configurer) {
 		Iterator<String> keys = configurer.getKeys();
-		while(keys.hasNext()) {
+		while (keys.hasNext()) {
 			String key = keys.next();
 			System.out.println(key + "=" + configurer.getProperty(key));
 		}

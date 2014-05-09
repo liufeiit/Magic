@@ -13,6 +13,6 @@ public class ServiceNamespaceHandler extends NamespaceHandlerSupport {
 
 	@Override
 	public void init() {
-		registerBeanDefinitionParser("service", new ServiceBeanDefinitionParser());
+		registerBeanDefinitionParser("service", new ServiceDefinitionParser());
 	}
 }
