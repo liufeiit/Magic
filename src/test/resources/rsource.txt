@@ -1,0 +1,3 @@
+mvn archetype:generate -DarchetypeCatalog=http://tapestry.apache.org
+
+ mvn jetty:run
