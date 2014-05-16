@@ -2,6 +2,9 @@ package magic.service;
 
 import java.util.Iterator;
 
+import javax.inject.Inject;
+
+import magic.springext.annotation.Injectable;
 import magic.springext.service.Configuration;
 import magic.springext.service.Service;
 
@@ -17,6 +20,10 @@ public class HelloService implements Service {
 
 	private String firstName;
 
+	@Injectable
+//	@Inject
+	public FetchService fetchService;
+	
 	private HelloService service;
 
 	/**
@@ -35,10 +42,6 @@ public class HelloService implements Service {
 		this.firstName = firstName;
 	}
 
-	/**
-	 * @param service
-	 *            the service to set
-	 */
 	public void setService(HelloService service) {
 		this.service = service;
 	}

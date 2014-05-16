@@ -9,6 +9,7 @@ import javax.inject.Inject;
 import magic.springext.annotation.Injectable;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
 import org.springframework.beans.factory.annotation.Value;
 
 /**
@@ -18,9 +19,9 @@ import org.springframework.beans.factory.annotation.Value;
  * @version 1.0
  * @since 2014年5月16日 下午7:37:14
  */
-public class AutowiredAnnotationBeanPostProcessor extends org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor {
+public class InjectAnnotationBeanPostProcessor extends AutowiredAnnotationBeanPostProcessor {
 
-	public AutowiredAnnotationBeanPostProcessor() {
+	public InjectAnnotationBeanPostProcessor() {
 		Set<Class<? extends Annotation>> autowiredAnnotationTypes = new HashSet<Class<? extends Annotation>>();
 		autowiredAnnotationTypes.add(Inject.class);
 		autowiredAnnotationTypes.add(Injectable.class);

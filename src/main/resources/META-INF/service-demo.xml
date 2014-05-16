@@ -19,6 +19,8 @@
     	</configurer>
     </service>
     
+    <service id="ss" class="magic.service.FetchService"></service>
+    
     <service id="hello1" class="magic.service.HelloService">
     	<property name="name" value="杨雪"/>
     	<property name="first-name" value="yang"/>
