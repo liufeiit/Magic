@@ -23,7 +23,6 @@ import org.springframework.beans.factory.parsing.PropertyEntry;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
-import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.beans.factory.xml.AbstractBeanDefinitionParser;
 import org.springframework.beans.factory.xml.BeanDefinitionParserDelegate;
 import org.springframework.beans.factory.xml.ParserContext;
@@ -103,9 +102,6 @@ public class ServiceDefinitionParser extends AbstractBeanDefinitionParser {
 
 	@Override
 	protected AbstractBeanDefinition parseInternal(Element element, ParserContext parserContext) {
-		RootBeanDefinition beanDefinition = new RootBeanDefinition(InjectAnnotationBeanPostProcessor.class);
-		parserContext.getRegistry().registerBeanDefinition(InjectAnnotationBeanPostProcessor.class.getName() + "$000", beanDefinition);
-		
 		parseState.push(new BeanEntry(element.getAttribute(ID_ATTRIBUTE)));
 		GenericBeanDefinition definition = null;
 		try {

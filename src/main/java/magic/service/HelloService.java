@@ -2,7 +2,11 @@ package magic.service;
 
 import java.util.Iterator;
 
+import javax.annotation.Resource;
 import javax.inject.Inject;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import magic.springext.annotation.Injectable;
 import magic.springext.service.Configuration;
@@ -24,6 +28,9 @@ public class HelloService implements Service {
 //	@Inject
 	public FetchService fetchService;
 	
+//	@Autowired
+	@Qualifier(value="hello1")
+//	@Resource(name="hello1")
 	private HelloService service;
 
 	/**
@@ -42,9 +49,9 @@ public class HelloService implements Service {
 		this.firstName = firstName;
 	}
 
-	public void setService(HelloService service) {
-		this.service = service;
-	}
+//	public void setService(HelloService service) {
+//		this.service = service;
+//	}
 
 	public String say() {
 		if (service != null)

@@ -11,9 +11,9 @@
     <service id="hello" class="magic.service.HelloService">
     	<property name="name" value="刘飞"/>
     	<property name="first-name" value="liu"/>
-    	<property name="service">
+    	<!-- <property name="service">
     		<ref service="hello1"/>
-    	</property>
+    	</property> -->
     	<configurer>
     		<item key="ssssssssssssssss" value="ddd"/>
     	</configurer>
