@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans 
+    xmlns="http://www.itjiehun.com/schema/magic/service"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+        http://www.itjiehun.com/schema/magic/service http://www.itjiehun.com/schema/magic/service-1.0.xsd
+        http://www.itjiehun.com/schema/magic/service service-1.1.0.xsd">
+    
+    <service id="hello" class="magic.service.HelloService">
+    	<property name="name" value="刘飞"/>
+    	<property name="firstName" value="liu"/>
+    </service>
+    
+    <!-- <service id="hello222" class="magic.service.HelloService">
+    	<property name="name" value="刘飞"/>
+    	<property name="first-name" value="liu"/>
+    	<property name="service">
+    		<ref service="hello1"/>
+    	</property>
+    	<configurer>
+    		<item key="ssssssssssssssss" value="ddd"/>
+    	</configurer>
+    </service>
+    
+    <service id="ss" class="magic.service.FetchService"></service> -->
+    
+    <service id="hello1" class="magic.service.HelloService">
+    	<property name="name" value="杨雪"/>
+    	<property name="firstName" value="yang"/>
+    </service>
+
+</beans:beans>
