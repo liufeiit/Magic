@@ -11,6 +11,12 @@
     <service id="hello" class="magic.service.HelloService">
     	<property name="name" value="刘飞"/>
     	<property name="firstName" value="liu"/>
+    	<property name="service">
+    		<service class="magic.service.HelloService">
+		    	<property name="name" value="杨雪123"/>
+		    	<property name="firstName" value="yang"/>
+		    </service>
+    	</property>
     </service>
     
     <!-- <service id="hello222" class="magic.service.HelloService">

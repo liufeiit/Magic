@@ -224,7 +224,7 @@ public class ServiceDefinitionParserDelegate {
 
 	private final Set<String> usedNames = new HashSet<String>();
 
-	private final ParserContext parserContext;
+	private ParserContext parserContext;
 
 	public ServiceDefinitionParserDelegate(ParserContext parserContext) {
 		Assert.notNull(parserContext, "ParserContext must not be null");

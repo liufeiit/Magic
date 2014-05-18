@@ -49,9 +49,9 @@ public class HelloService implements Service {
 		this.firstName = firstName;
 	}
 
-//	public void setService(HelloService service) {
-//		this.service = service;
-//	}
+	public void setService(HelloService service) {
+		this.service = service;
+	}
 
 	public String say() {
 		if (service != null)

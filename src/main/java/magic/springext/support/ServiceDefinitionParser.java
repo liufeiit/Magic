@@ -31,8 +31,8 @@ public class ServiceDefinitionParser implements BeanDefinitionParser {
 
 	@Override
 	public BeanDefinition parse(Element element, ParserContext parserContext) {
-		BeanDefinitionHolder definitionHolder = new ServiceDefinitionParserDelegate(parserContext)
-				.parseServiceDefinitionElement(element);
+		ServiceDefinitionParserDelegate delegate = new ServiceDefinitionParserDelegate(parserContext);
+		BeanDefinitionHolder definitionHolder = delegate.parseServiceDefinitionElement(element);
 		if (definitionHolder == null) {
 			return null;
 		}
