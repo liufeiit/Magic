@@ -27,7 +27,6 @@ import org.springframework.beans.factory.parsing.PropertyEntry;
 import org.springframework.beans.factory.parsing.QualifierEntry;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.AutowireCandidateQualifier;
-import org.springframework.beans.factory.support.BeanDefinitionDefaults;
 import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
 import org.springframework.beans.factory.support.LookupOverride;
 import org.springframework.beans.factory.support.ManagedArray;
@@ -37,7 +36,6 @@ import org.springframework.beans.factory.support.ManagedProperties;
 import org.springframework.beans.factory.support.ManagedSet;
 import org.springframework.beans.factory.support.MethodOverrides;
 import org.springframework.beans.factory.support.ReplaceOverride;
-import org.springframework.beans.factory.xml.DocumentDefaultsDefinition;
 import org.springframework.beans.factory.xml.NamespaceHandler;
 import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.beans.factory.xml.XmlReaderContext;
@@ -200,23 +198,7 @@ public class ServiceDefinitionParserDelegate {
 
 	public static final String QUALIFIER_ATTRIBUTE_ELEMENT = "attribute";
 
-	public static final String DEFAULT_LAZY_INIT_ATTRIBUTE = "default-lazy-init";
-
-	public static final String DEFAULT_MERGE_ATTRIBUTE = "default-merge";
-
-	public static final String DEFAULT_AUTOWIRE_ATTRIBUTE = "default-autowire";
-
-	public static final String DEFAULT_DEPENDENCY_CHECK_ATTRIBUTE = "default-dependency-check";
-
-	public static final String DEFAULT_AUTOWIRE_CANDIDATES_ATTRIBUTE = "default-autowire-candidates";
-
-	public static final String DEFAULT_INIT_METHOD_ATTRIBUTE = "default-init-method";
-
-	public static final String DEFAULT_DESTROY_METHOD_ATTRIBUTE = "default-destroy-method";
-
 	private final XmlReaderContext readerContext;
-
-	private final DocumentDefaultsDefinition defaults = new DocumentDefaultsDefinition();
 
 	private final ParseState parseState = new ParseState();
 
@@ -233,114 +215,18 @@ public class ServiceDefinitionParserDelegate {
 		this.parserContext = parserContext;
 	}
 
-	public final XmlReaderContext getReaderContext() {
-		return this.readerContext;
+	public BeanDefinitionHolder parseServiceDefinitionElement(Element element) {
+		return parseServiceDefinitionElement(element, null);
 	}
 
-	public final Environment getEnvironment() {
-		return this.environment;
-	}
-
-	protected Object extractSource(Element ele) {
-		return this.readerContext.extractSource(ele);
-	}
-
-	protected void error(String message, Node source) {
-		this.readerContext.error(message, source, this.parseState.snapshot());
-	}
-
-	protected void error(String message, Element source) {
-		this.readerContext.error(message, source, this.parseState.snapshot());
-	}
-
-	protected void error(String message, Element source, Throwable cause) {
-		this.readerContext.error(message, source, this.parseState.snapshot(), cause);
-	}
-
-	public void initDefaults(Element root) {
-		initDefaults(root, null);
-	}
-
-	public void initDefaults(Element root, ServiceDefinitionParserDelegate parent) {
-		populateDefaults(this.defaults, (parent != null ? parent.defaults : null), root);
-		this.readerContext.fireDefaultsRegistered(this.defaults);
-	}
-
-	protected void populateDefaults(DocumentDefaultsDefinition defaults, DocumentDefaultsDefinition parentDefaults,
-			Element root) {
-		String lazyInit = root.getAttribute(DEFAULT_LAZY_INIT_ATTRIBUTE);
-		if (DEFAULT_VALUE.equals(lazyInit)) {
-			lazyInit = parentDefaults != null ? parentDefaults.getLazyInit() : FALSE_VALUE;
-		}
-		defaults.setLazyInit(lazyInit);
-
-		String merge = root.getAttribute(DEFAULT_MERGE_ATTRIBUTE);
-		if (DEFAULT_VALUE.equals(merge)) {
-			merge = parentDefaults != null ? parentDefaults.getMerge() : FALSE_VALUE;
-		}
-		defaults.setMerge(merge);
-
-		String autowire = root.getAttribute(DEFAULT_AUTOWIRE_ATTRIBUTE);
-		if (DEFAULT_VALUE.equals(autowire)) {
-			autowire = parentDefaults != null ? parentDefaults.getAutowire() : AUTOWIRE_NO_VALUE;
-		}
-		defaults.setAutowire(autowire);
-		defaults.setDependencyCheck(root.getAttribute(DEFAULT_DEPENDENCY_CHECK_ATTRIBUTE));
-
-		if (root.hasAttribute(DEFAULT_AUTOWIRE_CANDIDATES_ATTRIBUTE)) {
-			defaults.setAutowireCandidates(root.getAttribute(DEFAULT_AUTOWIRE_CANDIDATES_ATTRIBUTE));
-		} else if (parentDefaults != null) {
-			defaults.setAutowireCandidates(parentDefaults.getAutowireCandidates());
-		}
-
-		if (root.hasAttribute(DEFAULT_INIT_METHOD_ATTRIBUTE)) {
-			defaults.setInitMethod(root.getAttribute(DEFAULT_INIT_METHOD_ATTRIBUTE));
-		} else if (parentDefaults != null) {
-			defaults.setInitMethod(parentDefaults.getInitMethod());
-		}
-
-		if (root.hasAttribute(DEFAULT_DESTROY_METHOD_ATTRIBUTE)) {
-			defaults.setDestroyMethod(root.getAttribute(DEFAULT_DESTROY_METHOD_ATTRIBUTE));
-		} else if (parentDefaults != null) {
-			defaults.setDestroyMethod(parentDefaults.getDestroyMethod());
-		}
-
-		defaults.setSource(this.readerContext.extractSource(root));
-	}
-
-	public DocumentDefaultsDefinition getDefaults() {
-		return this.defaults;
-	}
-
-	public BeanDefinitionDefaults getServiceDefinitionDefaults() {
-		BeanDefinitionDefaults bdd = new BeanDefinitionDefaults();
-		bdd.setLazyInit("TRUE".equalsIgnoreCase(this.defaults.getLazyInit()));
-		bdd.setDependencyCheck(this.getDependencyCheck(DEFAULT_VALUE));
-		bdd.setAutowireMode(this.getAutowireMode(DEFAULT_VALUE));
-		bdd.setInitMethodName(this.defaults.getInitMethod());
-		bdd.setDestroyMethodName(this.defaults.getDestroyMethod());
-		return bdd;
-	}
-
-	public String[] getAutowireCandidatePatterns() {
-		String candidatePattern = this.defaults.getAutowireCandidates();
-		return (candidatePattern != null ? StringUtils.commaDelimitedListToStringArray(candidatePattern) : null);
-	}
-
-	public BeanDefinitionHolder parseServiceDefinitionElement(Element ele) {
-		return parseServiceDefinitionElement(ele, null);
-	}
-
-	public BeanDefinitionHolder parseServiceDefinitionElement(Element ele, BeanDefinition containingService) {
-		String id = ele.getAttribute(ID_ATTRIBUTE);
-		String nameAttr = ele.getAttribute(NAME_ATTRIBUTE);
-
+	public BeanDefinitionHolder parseServiceDefinitionElement(Element element, BeanDefinition containingService) {
+		String id = element.getAttribute(ID_ATTRIBUTE);
+		String nameAttr = element.getAttribute(NAME_ATTRIBUTE);
 		List<String> aliases = new ArrayList<String>();
 		if (StringUtils.hasLength(nameAttr)) {
 			String[] nameArr = StringUtils.tokenizeToStringArray(nameAttr, MULTI_VALUE_ATTRIBUTE_DELIMITERS);
 			aliases.addAll(Arrays.asList(nameArr));
 		}
-
 		String serviceName = id;
 		if (!StringUtils.hasText(serviceName) && !aliases.isEmpty()) {
 			serviceName = aliases.remove(0);
@@ -349,46 +235,42 @@ public class ServiceDefinitionParserDelegate {
 						+ " as aliases");
 			}
 		}
-
 		if (containingService == null) {
-			checkNameUniqueness(serviceName, aliases, ele);
+			checkNameUniqueness(serviceName, aliases, element);
 		}
-
-		AbstractBeanDefinition serviceDefinition = parseServiceDefinitionElement(ele, serviceName, containingService);
-		if (serviceDefinition != null) {
-			if (!StringUtils.hasText(serviceName)) {
-				try {
-					if (containingService != null) {
-						serviceName = BeanDefinitionReaderUtils.generateBeanName(serviceDefinition,
-								this.readerContext.getRegistry(), true);
-					} else {
-						serviceName = this.readerContext.generateBeanName(serviceDefinition);
-						String serviceClassName = serviceDefinition.getBeanClassName();
-						if (serviceClassName != null && serviceName.startsWith(serviceClassName)
-								&& serviceName.length() > serviceClassName.length()
-								&& !this.readerContext.getRegistry().isBeanNameInUse(serviceClassName)) {
-							aliases.add(serviceClassName);
-						}
+		AbstractBeanDefinition serviceDefinition = parseServiceDefinitionElement(element, serviceName, containingService);
+		if (serviceDefinition == null) {
+			return null;
+		}
+		if (!StringUtils.hasText(serviceName)) {
+			try {
+				if (containingService != null) {
+					serviceName = BeanDefinitionReaderUtils.generateBeanName(serviceDefinition,
+							this.readerContext.getRegistry(), true);
+				} else {
+					serviceName = this.readerContext.generateBeanName(serviceDefinition);
+					String serviceClassName = serviceDefinition.getBeanClassName();
+					if (serviceClassName != null && serviceName.startsWith(serviceClassName)
+							&& serviceName.length() > serviceClassName.length()
+							&& !this.readerContext.getRegistry().isBeanNameInUse(serviceClassName)) {
+						aliases.add(serviceClassName);
 					}
-					if (log.isDebugEnabled()) {
-						log.debug("Neither XML 'id' nor 'name' specified - " + "using generated service name ["
-								+ serviceName + "]");
-					}
-				} catch (Exception ex) {
-					error(ex.getMessage(), ele);
-					return null;
 				}
+				if (log.isDebugEnabled()) {
+					log.debug("Neither XML 'id' nor 'name' specified - " + "using generated service name ["
+							+ serviceName + "]");
+				}
+			} catch (Exception ex) {
+				error(ex.getMessage(), element);
+				return null;
 			}
-			String[] aliasesArray = StringUtils.toStringArray(aliases);
-			return new BeanDefinitionHolder(serviceDefinition, serviceName, aliasesArray);
 		}
-
-		return null;
+		String[] aliasesArray = StringUtils.toStringArray(aliases);
+		return new BeanDefinitionHolder(serviceDefinition, serviceName, aliasesArray);
 	}
 
-	protected void checkNameUniqueness(String serviceName, List<String> aliases, Element beanElement) {
+	protected void checkNameUniqueness(String serviceName, List<String> aliases, Element serviceElement) {
 		String foundName = null;
-
 		if (StringUtils.hasText(serviceName) && this.usedNames.contains(serviceName)) {
 			foundName = serviceName;
 		}
@@ -396,51 +278,42 @@ public class ServiceDefinitionParserDelegate {
 			foundName = CollectionUtils.findFirstMatch(this.usedNames, aliases);
 		}
 		if (foundName != null) {
-			error("Service name '" + foundName + "' is already used in this <services> element", beanElement);
+			error("Service name '" + foundName + "' is already used in this <services> element", serviceElement);
 		}
-
-		this.usedNames.add(serviceName);
-		this.usedNames.addAll(aliases);
+		usedNames.add(serviceName);
+		usedNames.addAll(aliases);
 	}
 
-	public AbstractBeanDefinition parseServiceDefinitionElement(Element ele, String serviceName,
+	public AbstractBeanDefinition parseServiceDefinitionElement(Element element, String serviceName,
 			BeanDefinition containingService) {
-
-		this.parseState.push(new BeanEntry(serviceName));
-
+		parseState.push(new BeanEntry(serviceName));
 		String className = null;
-		if (ele.hasAttribute(CLASS_ATTRIBUTE)) {
-			className = ele.getAttribute(CLASS_ATTRIBUTE).trim();
+		if (element.hasAttribute(CLASS_ATTRIBUTE)) {
+			className = element.getAttribute(CLASS_ATTRIBUTE).trim();
 		}
-
 		try {
 			String parent = null;
-			if (ele.hasAttribute(PARENT_ATTRIBUTE)) {
-				parent = ele.getAttribute(PARENT_ATTRIBUTE);
+			if (element.hasAttribute(PARENT_ATTRIBUTE)) {
+				parent = element.getAttribute(PARENT_ATTRIBUTE);
 			}
-			AbstractBeanDefinition bd = createServiceDefinition(className, parent);
-
-			parseServiceDefinitionAttributes(ele, serviceName, containingService, bd);
-			bd.setDescription(DomUtils.getChildElementValueByTagName(ele, DESCRIPTION_ELEMENT));
-
-			parseMetaElements(ele, bd);
-			parseLookupOverrideSubElements(ele, bd.getMethodOverrides());
-			parseReplacedMethodSubElements(ele, bd.getMethodOverrides());
-
-			parseConstructorArgElements(ele, bd);
-			parsePropertyElements(ele, bd);
-			parseQualifierElements(ele, bd);
-
-			bd.setResource(this.readerContext.getResource());
-			bd.setSource(extractSource(ele));
-
-			return bd;
+			AbstractBeanDefinition serviceDefinition = createServiceDefinition(className, parent);
+			parseServiceDefinitionAttributes(element, serviceName, containingService, serviceDefinition);
+			serviceDefinition.setDescription(DomUtils.getChildElementValueByTagName(element, DESCRIPTION_ELEMENT));
+			parseMetaElements(element, serviceDefinition);
+			parseLookupOverrideSubElements(element, serviceDefinition.getMethodOverrides());
+			parseReplacedMethodSubElements(element, serviceDefinition.getMethodOverrides());
+			parseConstructorArgElements(element, serviceDefinition);
+			parsePropertyElements(element, serviceDefinition);
+			parseQualifierElements(element, serviceDefinition);
+			serviceDefinition.setResource(this.readerContext.getResource());
+			serviceDefinition.setSource(extractSource(element));
+			return serviceDefinition;
 		} catch (ClassNotFoundException ex) {
-			error("Service class [" + className + "] not found", ele, ex);
+			error("Service class [" + className + "] not found", element, ex);
 		} catch (NoClassDefFoundError err) {
-			error("Class that service class [" + className + "] depends on not found", ele, err);
+			error("Class that service class [" + className + "] depends on not found", element, err);
 		} catch (Throwable ex) {
-			error("Unexpected failure during Service definition parsing", ele, ex);
+			error("Unexpected failure during Service definition parsing", element, ex);
 		} finally {
 			this.parseState.pop();
 		}
@@ -448,40 +321,33 @@ public class ServiceDefinitionParserDelegate {
 		return null;
 	}
 
-	public AbstractBeanDefinition parseServiceDefinitionAttributes(Element ele, String serviceName,
+	public AbstractBeanDefinition parseServiceDefinitionAttributes(Element element, String serviceName,
 			BeanDefinition containingService, AbstractBeanDefinition serviceDefinition) {
-
-		if (ele.hasAttribute(SCOPE_ATTRIBUTE)) {
-			serviceDefinition.setScope(ele.getAttribute(SCOPE_ATTRIBUTE));
+		if (element.hasAttribute(SCOPE_ATTRIBUTE)) {
+			serviceDefinition.setScope(element.getAttribute(SCOPE_ATTRIBUTE));
 		} else if (containingService != null) {
 			serviceDefinition.setScope(containingService.getScope());
 		}
-
-		if (ele.hasAttribute(ABSTRACT_ATTRIBUTE)) {
-			serviceDefinition.setAbstract(TRUE_VALUE.equals(ele.getAttribute(ABSTRACT_ATTRIBUTE)));
+		if (element.hasAttribute(ABSTRACT_ATTRIBUTE)) {
+			serviceDefinition.setAbstract(TRUE_VALUE.equals(element.getAttribute(ABSTRACT_ATTRIBUTE)));
 		}
-
-		String lazyInit = ele.getAttribute(LAZY_INIT_ATTRIBUTE);
+		String lazyInit = element.getAttribute(LAZY_INIT_ATTRIBUTE);
 		if (DEFAULT_VALUE.equals(lazyInit)) {
-			lazyInit = this.defaults.getLazyInit();
+			lazyInit = parserContext.getDelegate().getDefaults().getLazyInit();
 		}
 		serviceDefinition.setLazyInit(TRUE_VALUE.equals(lazyInit));
-
-		String autowire = ele.getAttribute(AUTOWIRE_ATTRIBUTE);
+		String autowire = element.getAttribute(AUTOWIRE_ATTRIBUTE);
 		serviceDefinition.setAutowireMode(getAutowireMode(autowire));
-
-		String dependencyCheck = ele.getAttribute(DEPENDENCY_CHECK_ATTRIBUTE);
+		String dependencyCheck = element.getAttribute(DEPENDENCY_CHECK_ATTRIBUTE);
 		serviceDefinition.setDependencyCheck(getDependencyCheck(dependencyCheck));
-
-		if (ele.hasAttribute(DEPENDS_ON_ATTRIBUTE)) {
-			String dependsOn = ele.getAttribute(DEPENDS_ON_ATTRIBUTE);
+		if (element.hasAttribute(DEPENDS_ON_ATTRIBUTE)) {
+			String dependsOn = element.getAttribute(DEPENDS_ON_ATTRIBUTE);
 			serviceDefinition.setDependsOn(StringUtils.tokenizeToStringArray(dependsOn,
 					MULTI_VALUE_ATTRIBUTE_DELIMITERS));
 		}
-
-		String autowireCandidate = ele.getAttribute(AUTOWIRE_CANDIDATE_ATTRIBUTE);
+		String autowireCandidate = element.getAttribute(AUTOWIRE_CANDIDATE_ATTRIBUTE);
 		if ("".equals(autowireCandidate) || DEFAULT_VALUE.equals(autowireCandidate)) {
-			String candidatePattern = this.defaults.getAutowireCandidates();
+			String candidatePattern = parserContext.getDelegate().getDefaults().getAutowireCandidates();
 			if (candidatePattern != null) {
 				String[] patterns = StringUtils.commaDelimitedListToStringArray(candidatePattern);
 				serviceDefinition.setAutowireCandidate(PatternMatchUtils.simpleMatch(patterns, serviceName));
@@ -489,55 +355,53 @@ public class ServiceDefinitionParserDelegate {
 		} else {
 			serviceDefinition.setAutowireCandidate(TRUE_VALUE.equals(autowireCandidate));
 		}
-
-		if (ele.hasAttribute(PRIMARY_ATTRIBUTE)) {
-			serviceDefinition.setPrimary(TRUE_VALUE.equals(ele.getAttribute(PRIMARY_ATTRIBUTE)));
+		if (element.hasAttribute(PRIMARY_ATTRIBUTE)) {
+			serviceDefinition.setPrimary(TRUE_VALUE.equals(element.getAttribute(PRIMARY_ATTRIBUTE)));
 		}
-
-		if (ele.hasAttribute(INIT_METHOD_ATTRIBUTE)) {
-			String initMethodName = ele.getAttribute(INIT_METHOD_ATTRIBUTE);
+		if (element.hasAttribute(INIT_METHOD_ATTRIBUTE)) {
+			String initMethodName = element.getAttribute(INIT_METHOD_ATTRIBUTE);
 			if (!"".equals(initMethodName)) {
 				serviceDefinition.setInitMethodName(initMethodName);
 			}
 		} else {
-			if (this.defaults.getInitMethod() != null) {
-				serviceDefinition.setInitMethodName(this.defaults.getInitMethod());
+			if (parserContext.getDelegate().getDefaults().getInitMethod() != null) {
+				serviceDefinition.setInitMethodName(parserContext.getDelegate().getDefaults().getInitMethod());
 				serviceDefinition.setEnforceInitMethod(false);
 			}
 		}
-
-		if (ele.hasAttribute(DESTROY_METHOD_ATTRIBUTE)) {
-			String destroyMethodName = ele.getAttribute(DESTROY_METHOD_ATTRIBUTE);
+		if (element.hasAttribute(DESTROY_METHOD_ATTRIBUTE)) {
+			String destroyMethodName = element.getAttribute(DESTROY_METHOD_ATTRIBUTE);
 			if (!"".equals(destroyMethodName)) {
 				serviceDefinition.setDestroyMethodName(destroyMethodName);
 			}
 		} else {
-			if (this.defaults.getDestroyMethod() != null) {
-				serviceDefinition.setDestroyMethodName(this.defaults.getDestroyMethod());
+			if (parserContext.getDelegate().getDefaults().getDestroyMethod() != null) {
+				serviceDefinition.setDestroyMethodName(parserContext.getDelegate().getDefaults().getDestroyMethod());
 				serviceDefinition.setEnforceDestroyMethod(false);
 			}
 		}
-
-		if (ele.hasAttribute(FACTORY_METHOD_ATTRIBUTE)) {
-			serviceDefinition.setFactoryMethodName(ele.getAttribute(FACTORY_METHOD_ATTRIBUTE));
+		if (element.hasAttribute(FACTORY_METHOD_ATTRIBUTE)) {
+			serviceDefinition.setFactoryMethodName(element.getAttribute(FACTORY_METHOD_ATTRIBUTE));
 		}
-		if (ele.hasAttribute(FACTORY_BEAN_ATTRIBUTE)) {
-			serviceDefinition.setFactoryBeanName(ele.getAttribute(FACTORY_BEAN_ATTRIBUTE));
+		if (element.hasAttribute(FACTORY_BEAN_ATTRIBUTE)) {
+			serviceDefinition.setFactoryBeanName(element.getAttribute(FACTORY_BEAN_ATTRIBUTE));
 		}
-
 		return serviceDefinition;
 	}
 
 	protected AbstractBeanDefinition createServiceDefinition(String className, String parentName)
 			throws ClassNotFoundException {
-
 		return BeanDefinitionReaderUtils.createBeanDefinition(parentName, className,
-				this.readerContext.getBeanClassLoader());
+				readerContext.getBeanClassLoader());
 	}
 
-	public void parseMetaElements(Element ele, BeanMetadataAttributeAccessor attributeAccessor) {
-		NodeList nl = ele.getChildNodes();
-		for (int i = 0; i < nl.getLength(); i++) {
+	public void parseMetaElements(Element element, BeanMetadataAttributeAccessor attributeAccessor) {
+		NodeList nl = element.getChildNodes();
+		int length = nl.getLength();
+		if(length <= 0) {
+			return;
+		}
+		for (int i = 0; i < length; i++) {
 			Node node = nl.item(i);
 			if (isCandidateElement(node) && nodeNameEquals(node, META_ELEMENT)) {
 				Element metaElement = (Element) node;
@@ -554,7 +418,7 @@ public class ServiceDefinitionParserDelegate {
 	public int getAutowireMode(String attValue) {
 		String att = attValue;
 		if (DEFAULT_VALUE.equals(att)) {
-			att = this.defaults.getAutowire();
+			att = parserContext.getDelegate().getDefaults().getAutowire();
 		}
 		int autowire = AbstractBeanDefinition.AUTOWIRE_BY_NAME;
 		if (AUTOWIRE_BY_NAME_VALUE.equals(att)) {
@@ -572,7 +436,7 @@ public class ServiceDefinitionParserDelegate {
 	public int getDependencyCheck(String attValue) {
 		String att = attValue;
 		if (DEFAULT_VALUE.equals(att)) {
-			att = this.defaults.getDependencyCheck();
+			att = parserContext.getDelegate().getDefaults().getDependencyCheck();
 		}
 		if (DEPENDENCY_CHECK_ALL_ATTRIBUTE_VALUE.equals(att)) {
 			return AbstractBeanDefinition.DEPENDENCY_CHECK_ALL;
@@ -587,7 +451,11 @@ public class ServiceDefinitionParserDelegate {
 
 	public void parseConstructorArgElements(Element serviceEle, BeanDefinition serviceDefinition) {
 		NodeList nl = serviceEle.getChildNodes();
-		for (int i = 0; i < nl.getLength(); i++) {
+		int length = nl.getLength();
+		if(length <= 0) {
+			return;
+		}
+		for (int i = 0; i < length; i++) {
 			Node node = nl.item(i);
 			if (isCandidateElement(node) && nodeNameEquals(node, CONSTRUCTOR_ARG_ELEMENT)) {
 				parseConstructorArgElement((Element) node, serviceDefinition);
@@ -597,7 +465,11 @@ public class ServiceDefinitionParserDelegate {
 
 	public void parsePropertyElements(Element serviceEle, BeanDefinition serviceDefinition) {
 		NodeList nl = serviceEle.getChildNodes();
-		for (int i = 0; i < nl.getLength(); i++) {
+		int length = nl.getLength();
+		if(length <= 0) {
+			return;
+		}
+		for (int i = 0; i < length; i++) {
 			Node node = nl.item(i);
 			if (isCandidateElement(node) && nodeNameEquals(node, PROPERTY_ELEMENT)) {
 				parsePropertyElement((Element) node, serviceDefinition);
@@ -607,7 +479,11 @@ public class ServiceDefinitionParserDelegate {
 
 	public void parseQualifierElements(Element serviceEle, AbstractBeanDefinition serviceDefinition) {
 		NodeList nl = serviceEle.getChildNodes();
-		for (int i = 0; i < nl.getLength(); i++) {
+		int length = nl.getLength();
+		if(length <= 0) {
+			return;
+		}
+		for (int i = 0; i < length; i++) {
 			Node node = nl.item(i);
 			if (isCandidateElement(node) && nodeNameEquals(node, QUALIFIER_ELEMENT)) {
 				parseQualifierElement((Element) node, serviceDefinition);
@@ -617,7 +493,11 @@ public class ServiceDefinitionParserDelegate {
 
 	public void parseLookupOverrideSubElements(Element serviceEle, MethodOverrides overrides) {
 		NodeList nl = serviceEle.getChildNodes();
-		for (int i = 0; i < nl.getLength(); i++) {
+		int length = nl.getLength();
+		if(length <= 0) {
+			return;
+		}
+		for (int i = 0; i < length; i++) {
 			Node node = nl.item(i);
 			if (isCandidateElement(node) && nodeNameEquals(node, LOOKUP_METHOD_ELEMENT)) {
 				Element ele = (Element) node;
@@ -632,7 +512,11 @@ public class ServiceDefinitionParserDelegate {
 
 	public void parseReplacedMethodSubElements(Element serviceEle, MethodOverrides overrides) {
 		NodeList nl = serviceEle.getChildNodes();
-		for (int i = 0; i < nl.getLength(); i++) {
+		int length = nl.getLength();
+		if(length <= 0) {
+			return;
+		}
+		for (int i = 0; i < length; i++) {
 			Node node = nl.item(i);
 			if (isCandidateElement(node) && nodeNameEquals(node, REPLACED_METHOD_ELEMENT)) {
 				Element replacedMethodEle = (Element) node;
@@ -714,7 +598,7 @@ public class ServiceDefinitionParserDelegate {
 			error("Tag 'property' must have a 'name' attribute", ele);
 			return;
 		}
-		this.parseState.push(new PropertyEntry(propertyName));
+		parseState.push(new PropertyEntry(propertyName));
 		try {
 			if (serviceDefinition.getPropertyValues().contains(propertyName)) {
 				error("Multiple 'property' definitions for property '" + propertyName + "'", ele);
@@ -726,7 +610,7 @@ public class ServiceDefinitionParserDelegate {
 			pv.setSource(extractSource(ele));
 			serviceDefinition.getPropertyValues().addPropertyValue(pv);
 		} finally {
-			this.parseState.pop();
+			parseState.pop();
 		}
 	}
 
@@ -736,7 +620,7 @@ public class ServiceDefinitionParserDelegate {
 			error("Tag 'qualifier' must have a 'type' attribute", ele);
 			return;
 		}
-		this.parseState.push(new QualifierEntry(typeName));
+		parseState.push(new QualifierEntry(typeName));
 		try {
 			AutowireCandidateQualifier qualifier = new AutowireCandidateQualifier(typeName);
 			qualifier.setSource(extractSource(ele));
@@ -763,17 +647,17 @@ public class ServiceDefinitionParserDelegate {
 			}
 			serviceDefinition.addQualifier(qualifier);
 		} finally {
-			this.parseState.pop();
+			parseState.pop();
 		}
 	}
 
 	public Object parsePropertyValue(Element ele, BeanDefinition serviceDefinition, String propertyName) {
 		String elementName = (propertyName != null) ? "<property> element for property '" + propertyName + "'"
 				: "<constructor-arg> element";
-
 		NodeList nl = ele.getChildNodes();
 		Element subElement = null;
-		for (int i = 0; i < nl.getLength(); i++) {
+		int length = nl.getLength();
+		for (int i = 0; i < length; i++) {
 			Node node = nl.item(i);
 			if (node instanceof Element && !nodeNameEquals(node, DESCRIPTION_ELEMENT)
 					&& !nodeNameEquals(node, META_ELEMENT)) {
@@ -785,14 +669,12 @@ public class ServiceDefinitionParserDelegate {
 				}
 			}
 		}
-
 		boolean hasRefAttribute = ele.hasAttribute(REF_ATTRIBUTE);
 		boolean hasValueAttribute = ele.hasAttribute(VALUE_ATTRIBUTE);
 		if ((hasRefAttribute && hasValueAttribute) || ((hasRefAttribute || hasValueAttribute) && subElement != null)) {
 			error(elementName
 					+ " is only allowed to contain either 'ref' attribute OR 'value' attribute OR sub-element", ele);
 		}
-
 		if (hasRefAttribute) {
 			String refName = ele.getAttribute(REF_ATTRIBUTE);
 			if (!StringUtils.hasText(refName)) {
@@ -979,14 +861,12 @@ public class ServiceDefinitionParserDelegate {
 	public Map<Object, Object> parseMapElement(Element mapEle, BeanDefinition serviceDefinition) {
 		String defaultKeyType = mapEle.getAttribute(KEY_TYPE_ATTRIBUTE);
 		String defaultValueType = mapEle.getAttribute(VALUE_TYPE_ATTRIBUTE);
-
 		List<Element> entryEles = DomUtils.getChildElementsByTagName(mapEle, ENTRY_ELEMENT);
 		ManagedMap<Object, Object> map = new ManagedMap<Object, Object>(entryEles.size());
 		map.setSource(extractSource(mapEle));
 		map.setKeyTypeName(defaultKeyType);
 		map.setValueTypeName(defaultValueType);
 		map.setMergeEnabled(parseMergeAttribute(mapEle));
-
 		for (Element entryEle : entryEles) {
 			// Should only have one value child element: ref, value, list, etc.
 			// Optionally, there might be a key child element.
@@ -1015,7 +895,6 @@ public class ServiceDefinitionParserDelegate {
 					}
 				}
 			}
-
 			// Extract key from attribute or sub-element.
 			Object key = null;
 			boolean hasKeyAttribute = entryEle.hasAttribute(KEY_ATTRIBUTE);
@@ -1039,7 +918,6 @@ public class ServiceDefinitionParserDelegate {
 			} else {
 				error("<entry> element must specify a key", entryEle);
 			}
-
 			// Extract value from attribute or sub-element.
 			Object value = null;
 			boolean hasValueAttribute = entryEle.hasAttribute(VALUE_ATTRIBUTE);
@@ -1078,7 +956,6 @@ public class ServiceDefinitionParserDelegate {
 			// Add final key and value to the Map.
 			map.put(key, value);
 		}
-
 		return map;
 	}
 
@@ -1127,14 +1004,13 @@ public class ServiceDefinitionParserDelegate {
 			valueHolder.setSource(extractSource(propEle));
 			props.put(keyHolder, valueHolder);
 		}
-
 		return props;
 	}
 
 	public boolean parseMergeAttribute(Element collectionElement) {
 		String value = collectionElement.getAttribute(MERGE_ATTRIBUTE);
 		if (DEFAULT_VALUE.equals(value)) {
-			value = this.defaults.getMerge();
+			value = parserContext.getDelegate().getDefaults().getMerge();
 		}
 		return TRUE_VALUE.equals(value);
 	}
@@ -1160,16 +1036,13 @@ public class ServiceDefinitionParserDelegate {
 
 	public BeanDefinitionHolder decorateServiceDefinitionIfRequired(Element ele, BeanDefinitionHolder definitionHolder,
 			BeanDefinition containingServiceDefinition) {
-
 		BeanDefinitionHolder finalDefinition = definitionHolder;
-
 		// Decorate based on custom attributes first.
 		NamedNodeMap attributes = ele.getAttributes();
 		for (int i = 0; i < attributes.getLength(); i++) {
 			Node node = attributes.item(i);
 			finalDefinition = decorateIfRequired(node, finalDefinition, containingServiceDefinition);
 		}
-
 		// Decorate based on custom nested elements.
 		NodeList children = ele.getChildNodes();
 		for (int i = 0; i < children.getLength(); i++) {
@@ -1240,5 +1113,29 @@ public class ServiceDefinitionParserDelegate {
 
 	private boolean isCandidateElement(Node node) {
 		return (node instanceof Element && (isDefaultNamespace(node) || !isDefaultNamespace(node.getParentNode())));
+	}
+
+	public final XmlReaderContext getReaderContext() {
+		return this.readerContext;
+	}
+
+	public final Environment getEnvironment() {
+		return this.environment;
+	}
+
+	protected Object extractSource(Element ele) {
+		return this.readerContext.extractSource(ele);
+	}
+
+	protected void error(String message, Node source) {
+		this.readerContext.error(message, source, this.parseState.snapshot());
+	}
+
+	protected void error(String message, Element source) {
+		this.readerContext.error(message, source, this.parseState.snapshot());
+	}
+
+	protected void error(String message, Element source, Throwable cause) {
+		this.readerContext.error(message, source, this.parseState.snapshot(), cause);
 	}
 }

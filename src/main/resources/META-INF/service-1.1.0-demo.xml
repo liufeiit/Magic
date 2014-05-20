@@ -11,6 +11,11 @@
     <service id="hello" class="magic.service.HelloService">
     	<property name="name" value="刘飞"/>
     	<property name="firstName" value="liu"/>
+    	<property name="map">
+    		<map key-type="java.lang.String" value-type="java.lang.Object">
+    			<entry key="ser" value-ref="hello1"/>
+    		</map>
+    	</property>
     	<property name="service">
     		<service class="magic.service.HelloService">
 		    	<property name="name" value="杨雪123"/>

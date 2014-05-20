@@ -18,64 +18,9 @@
 		<xsd:attribute name="id" type="xsd:string"/>
 	</xsd:complexType>
 
-	<!-- Top-level <services> tag -->
-	<xsd:element name="services">
-		<xsd:complexType>
-			<xsd:sequence>
-				<xsd:element ref="description" minOccurs="0"/>
-				<xsd:choice minOccurs="0" maxOccurs="unbounded">
-					<xsd:element ref="import"/>
-					<xsd:element ref="alias"/>
-					<xsd:element ref="service"/>
-					<xsd:any namespace="##other" processContents="strict" minOccurs="0" maxOccurs="unbounded"/>
-				</xsd:choice>
-				<xsd:element ref="services" minOccurs="0" maxOccurs="unbounded"/>
-			</xsd:sequence>
-			<xsd:attribute name="profile" use="optional" type="xsd:string"/>
-			<xsd:attribute name="default-lazy-init" default="default" type="defaultable-boolean"/>
-			<xsd:attribute name="default-merge" default="default" type="defaultable-boolean"/>
-			<xsd:attribute name="default-autowire" default="default">
-				<xsd:simpleType>
-					<xsd:restriction base="xsd:NMTOKEN">
-						<xsd:enumeration value="default"/>
-						<xsd:enumeration value="no"/>
-						<xsd:enumeration value="byName"/>
-						<xsd:enumeration value="byType"/>
-						<xsd:enumeration value="constructor"/>
-					</xsd:restriction>
-				</xsd:simpleType>
-			</xsd:attribute>
-			<xsd:attribute name="default-autowire-candidates" type="xsd:string"/>
-			<xsd:attribute name="default-init-method" type="xsd:string"/>
-			<xsd:attribute name="default-destroy-method" type="xsd:string"/>
-			<xsd:anyAttribute namespace="##other" processContents="lax"/>
-		</xsd:complexType>
-	</xsd:element>
-
 	<xsd:element name="description">
 		<xsd:complexType mixed="true">
 			<xsd:choice minOccurs="0" maxOccurs="unbounded"/>
-		</xsd:complexType>
-	</xsd:element>
-
-	<xsd:element name="import">
-		<xsd:complexType>
-			<xsd:complexContent>
-				<xsd:restriction base="xsd:anyType">
-					<xsd:attribute name="resource" type="xsd:string" use="required"/>
-				</xsd:restriction>
-			</xsd:complexContent>
-		</xsd:complexType>
-	</xsd:element>
-
-	<xsd:element name="alias">
-		<xsd:complexType>
-			<xsd:complexContent>
-				<xsd:restriction base="xsd:anyType">
-					<xsd:attribute name="name" type="xsd:string" use="required"/>
-					<xsd:attribute name="alias" type="xsd:string" use="required"/>
-				</xsd:restriction>
-			</xsd:complexContent>
 		</xsd:complexType>
 	</xsd:element>
 

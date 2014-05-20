@@ -1,16 +1,13 @@
 package magic.service;
 
 import java.util.Iterator;
-
-import javax.annotation.Resource;
-import javax.inject.Inject;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import java.util.Map;
 
 import magic.springext.annotation.Injectable;
 import magic.springext.service.Configuration;
 import magic.springext.service.Service;
+
+import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * 
@@ -28,10 +25,17 @@ public class HelloService implements Service {
 //	@Inject
 	public FetchService fetchService;
 	
+	public Map<String, Object> map;
+	
 //	@Autowired
 	@Qualifier(value="hello1")
 //	@Resource(name="hello1")
 	private HelloService service;
+	
+	public void setMap(Map<String, Object> map) {
+		this.map = map;
+		System.out.println("map : " + map);
+	}
 
 	/**
 	 * @param name
