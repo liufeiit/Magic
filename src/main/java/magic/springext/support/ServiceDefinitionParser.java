@@ -22,6 +22,8 @@ import org.w3c.dom.Element;
  * @since 2014年5月18日 下午9:52:55
  */
 public class ServiceDefinitionParser implements BeanDefinitionParser {
+	
+	private ServiceDefinitionParserDelegate delegate = null;
 
 	public static void main(String[] args) {
 		ApplicationContext context = new ClassPathXmlApplicationContext("/META-INF/service-1.1.0-demo.xml");
@@ -31,7 +33,7 @@ public class ServiceDefinitionParser implements BeanDefinitionParser {
 
 	@Override
 	public BeanDefinition parse(Element element, ParserContext parserContext) {
-		ServiceDefinitionParserDelegate delegate = new ServiceDefinitionParserDelegate(parserContext);
+		ServiceDefinitionParserDelegate delegate = getDelegate(parserContext);
 		BeanDefinitionHolder definitionHolder = delegate.parseServiceDefinitionElement(element);
 		if (definitionHolder == null) {
 			return null;
@@ -51,6 +53,13 @@ public class ServiceDefinitionParser implements BeanDefinitionParser {
 			return null;
 		}
 		return definitionHolder.getBeanDefinition();
+	}
+	
+	private ServiceDefinitionParserDelegate getDelegate(ParserContext parserContext) {
+		if(delegate == null) {
+			delegate = new ServiceDefinitionParserDelegate(parserContext);
+		}
+		return delegate;
 	}
 
 	protected void registerBeanDefinition(BeanDefinitionHolder definition, BeanDefinitionRegistry registry) {
