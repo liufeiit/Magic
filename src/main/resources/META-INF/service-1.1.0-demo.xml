@@ -8,6 +8,8 @@
         http://www.itjiehun.com/schema/magic/service http://www.itjiehun.com/schema/magic/service-1.0.xsd
         http://www.itjiehun.com/schema/magic/service service-1.1.0.xsd">
     
+    <annotation-config/>
+    
     <service id="hello" class="magic.service.HelloService">
     	<property name="name" value="刘飞"/>
     	<property name="firstName" value="liu"/>
@@ -15,12 +17,6 @@
     		<map key-type="java.lang.String" value-type="java.lang.Object">
     			<entry key="ser" value-ref="hello1"/>
     		</map>
-    	</property>
-    	<property name="service">
-    		<service class="magic.service.HelloService">
-		    	<property name="name" value="杨雪123"/>
-		    	<property name="firstName" value="yang"/>
-		    </service>
     	</property>
     	<configurer merge-env="true" merge-props="true">
     		<item key="ssssssssssssss" value="wedsdssssssssssssdsdssdsd57462216"/>

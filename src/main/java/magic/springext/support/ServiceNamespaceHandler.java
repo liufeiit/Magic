@@ -1,6 +1,8 @@
 package magic.springext.support;
 
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
+import org.springframework.context.annotation.AnnotationConfigBeanDefinitionParser;
+import org.springframework.context.annotation.ComponentScanBeanDefinitionParser;
 
 /**
  * Spring Extension Service schema Handler.
@@ -14,5 +16,7 @@ public class ServiceNamespaceHandler extends NamespaceHandlerSupport {
 	@Override
 	public void init() {
 		registerBeanDefinitionParser("service", new ServiceDefinitionParser());
+		registerBeanDefinitionParser("annotation-config", new AnnotationConfigBeanDefinitionParser());
+		registerBeanDefinitionParser("component-scan", new ComponentScanBeanDefinitionParser());
 	}
 }
