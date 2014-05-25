@@ -1,14 +1,18 @@
 package magic.springext.support;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.MapConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanMetadataAttribute;
@@ -28,6 +32,7 @@ import org.springframework.beans.factory.parsing.QualifierEntry;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.AutowireCandidateQualifier;
 import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
+import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.beans.factory.support.LookupOverride;
 import org.springframework.beans.factory.support.ManagedArray;
 import org.springframework.beans.factory.support.ManagedList;
@@ -61,6 +66,8 @@ import org.w3c.dom.NodeList;
  */
 public class ServiceDefinitionParserDelegate {
 	protected final Logger log = LoggerFactory.getLogger(getClass());
+
+	private static final ClassLoader CLASS_LOADER = Thread.currentThread().getContextClassLoader();
 
 	public static final String SERVICES_NAMESPACE_URI = "http://www.itjiehun.com/schema/magic/service";
 
@@ -198,6 +205,13 @@ public class ServiceDefinitionParserDelegate {
 
 	public static final String QUALIFIER_ATTRIBUTE_ELEMENT = "attribute";
 
+	public static final String SET_CONFIGURER_METHOD_NAME = "setConfigurer";
+
+	public static final Class<?>[] SET_CONFIGURER_METHOD_PARAM_TYPES = new Class<?>[] { Configuration.class };
+
+	public static final String CONFIGURER_ELEMENT = "configurer";
+	public static final String ITEM_ELEMENT = "item";
+
 	private final XmlReaderContext readerContext;
 
 	private final ParseState parseState = new ParseState();
@@ -238,7 +252,8 @@ public class ServiceDefinitionParserDelegate {
 		if (containingService == null) {
 			checkNameUniqueness(serviceName, aliases, element);
 		}
-		AbstractBeanDefinition serviceDefinition = parseServiceDefinitionElement(element, serviceName, containingService);
+		AbstractBeanDefinition serviceDefinition = parseServiceDefinitionElement(element, serviceName,
+				containingService);
 		if (serviceDefinition == null) {
 			return null;
 		}
@@ -246,13 +261,13 @@ public class ServiceDefinitionParserDelegate {
 			try {
 				if (containingService != null) {
 					serviceName = BeanDefinitionReaderUtils.generateBeanName(serviceDefinition,
-							this.readerContext.getRegistry(), true);
+							readerContext.getRegistry(), true);
 				} else {
-					serviceName = this.readerContext.generateBeanName(serviceDefinition);
+					serviceName = readerContext.generateBeanName(serviceDefinition);
 					String serviceClassName = serviceDefinition.getBeanClassName();
 					if (serviceClassName != null && serviceName.startsWith(serviceClassName)
 							&& serviceName.length() > serviceClassName.length()
-							&& !this.readerContext.getRegistry().isBeanNameInUse(serviceClassName)) {
+							&& !readerContext.getRegistry().isBeanNameInUse(serviceClassName)) {
 						aliases.add(serviceClassName);
 					}
 				}
@@ -305,7 +320,10 @@ public class ServiceDefinitionParserDelegate {
 			parseConstructorArgElements(element, serviceDefinition);
 			parsePropertyElements(element, serviceDefinition);
 			parseQualifierElements(element, serviceDefinition);
-			serviceDefinition.setResource(this.readerContext.getResource());
+			if (ClassUtils.hasMethod(serviceDefinition.getBeanClass(), SET_CONFIGURER_METHOD_NAME,SET_CONFIGURER_METHOD_PARAM_TYPES)) {
+				parseConfigurerElement(element, serviceDefinition);
+			}
+			serviceDefinition.setResource(readerContext.getResource());
 			serviceDefinition.setSource(extractSource(element));
 			return serviceDefinition;
 		} catch (ClassNotFoundException ex) {
@@ -320,7 +338,55 @@ public class ServiceDefinitionParserDelegate {
 
 		return null;
 	}
+	
+	protected void parseConfigurerElement(Element element, BeanDefinition definition) {
+		NodeList configurerElement = element.getElementsByTagName(CONFIGURER_ELEMENT);
+		if (configurerElement.getLength() <= 0) {
+			return;
+		}
+		Element configElement = (Element) configurerElement.item(0);
+		boolean mergeEnv = TRUE_VALUE.equals(configElement.getAttribute("merge-env")) ? true : false;
+		boolean mergeProps = TRUE_VALUE.equals(configElement.getAttribute("merge-props")) ? true : false;
+		Map<String, Object> env = new HashMap<String, Object>();
+		if(mergeEnv) {
+			env.putAll(System.getenv());
+		}
+		if(mergeProps) {
+			env.putAll(convertPropertiesToMap(System.getProperties()));
+		}
+		Configuration configuration = new MapConfiguration(env);
+		NodeList itemElements = configElement.getElementsByTagName(ITEM_ELEMENT);
+		int len = itemElements.getLength();
+		if (len <= 0) {
+			PropertyValue pv = new PropertyValue(CONFIGURER_ELEMENT, configuration);
+			definition.getPropertyValues().addPropertyValue(pv);
+			return;
+		}
+		for (int i = 0; i < len; i++) {
+			Node itemElement = itemElements.item(i);
+			if (!isCandidateElement(itemElement)) {
+				continue;
+			}
+			Element item = (Element) itemElement;
+			String key = item.getAttribute(KEY_ATTRIBUTE);
+			if (!StringUtils.hasLength(key)) {
+				log.error("Tag 'item' must have a 'key' attribute");
+				continue;
+			}
+			Object val = parseItemValue(item);
+			if (val == null) {
+				continue;
+			}
+			configuration.setProperty(key, val);
+		}
+		PropertyValue pv = new PropertyValue(CONFIGURER_ELEMENT, configuration);
+		definition.getPropertyValues().addPropertyValue(pv);
+	}
 
+	private Object parseItemValue(Element item) {
+		return item.getAttribute(VALUE_ATTRIBUTE);
+	}
+	
 	public AbstractBeanDefinition parseServiceDefinitionAttributes(Element element, String serviceName,
 			BeanDefinition containingService, AbstractBeanDefinition serviceDefinition) {
 		if (element.hasAttribute(SCOPE_ATTRIBUTE)) {
@@ -391,14 +457,17 @@ public class ServiceDefinitionParserDelegate {
 
 	protected AbstractBeanDefinition createServiceDefinition(String className, String parentName)
 			throws ClassNotFoundException {
-		return BeanDefinitionReaderUtils.createBeanDefinition(parentName, className,
-				readerContext.getBeanClassLoader());
+		GenericBeanDefinition bd = new GenericBeanDefinition();
+		bd.setParentName(parentName);
+		bd.setBeanClassName(className);
+		bd.setBeanClass(ClassUtils.forName(className, CLASS_LOADER));
+		return bd;
 	}
 
 	public void parseMetaElements(Element element, BeanMetadataAttributeAccessor attributeAccessor) {
 		NodeList nl = element.getChildNodes();
 		int length = nl.getLength();
-		if(length <= 0) {
+		if (length <= 0) {
 			return;
 		}
 		for (int i = 0; i < length; i++) {
@@ -427,6 +496,8 @@ public class ServiceDefinitionParserDelegate {
 			autowire = AbstractBeanDefinition.AUTOWIRE_BY_TYPE;
 		} else if (AUTOWIRE_CONSTRUCTOR_VALUE.equals(att)) {
 			autowire = AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR;
+		} else if (AUTOWIRE_NO_VALUE.equals(att)) {
+			autowire = AbstractBeanDefinition.AUTOWIRE_NO;
 		} else if (AUTOWIRE_AUTODETECT_VALUE.equals(att)) {
 			autowire = AbstractBeanDefinition.AUTOWIRE_AUTODETECT;
 		}
@@ -452,7 +523,7 @@ public class ServiceDefinitionParserDelegate {
 	public void parseConstructorArgElements(Element serviceEle, BeanDefinition serviceDefinition) {
 		NodeList nl = serviceEle.getChildNodes();
 		int length = nl.getLength();
-		if(length <= 0) {
+		if (length <= 0) {
 			return;
 		}
 		for (int i = 0; i < length; i++) {
@@ -466,7 +537,7 @@ public class ServiceDefinitionParserDelegate {
 	public void parsePropertyElements(Element serviceEle, BeanDefinition serviceDefinition) {
 		NodeList nl = serviceEle.getChildNodes();
 		int length = nl.getLength();
-		if(length <= 0) {
+		if (length <= 0) {
 			return;
 		}
 		for (int i = 0; i < length; i++) {
@@ -480,7 +551,7 @@ public class ServiceDefinitionParserDelegate {
 	public void parseQualifierElements(Element serviceEle, AbstractBeanDefinition serviceDefinition) {
 		NodeList nl = serviceEle.getChildNodes();
 		int length = nl.getLength();
-		if(length <= 0) {
+		if (length <= 0) {
 			return;
 		}
 		for (int i = 0; i < length; i++) {
@@ -494,7 +565,7 @@ public class ServiceDefinitionParserDelegate {
 	public void parseLookupOverrideSubElements(Element serviceEle, MethodOverrides overrides) {
 		NodeList nl = serviceEle.getChildNodes();
 		int length = nl.getLength();
-		if(length <= 0) {
+		if (length <= 0) {
 			return;
 		}
 		for (int i = 0; i < length; i++) {
@@ -513,7 +584,7 @@ public class ServiceDefinitionParserDelegate {
 	public void parseReplacedMethodSubElements(Element serviceEle, MethodOverrides overrides) {
 		NodeList nl = serviceEle.getChildNodes();
 		int length = nl.getLength();
-		if(length <= 0) {
+		if (length <= 0) {
 			return;
 		}
 		for (int i = 0; i < length; i++) {
@@ -1137,5 +1208,32 @@ public class ServiceDefinitionParserDelegate {
 
 	protected void error(String message, Element source, Throwable cause) {
 		this.readerContext.error(message, source, this.parseState.snapshot(), cause);
+	}
+	
+	private Map<String, Object> convertPropertiesToMap(final Properties props) {
+		return new AbstractMap<String, Object>() {
+			@Override
+			public Set<Map.Entry<String, Object>> entrySet() {
+				Set<Map.Entry<String, Object>> entries = new HashSet<Map.Entry<String, Object>>();
+				for (final Map.Entry<Object, Object> propertyEntry : props.entrySet()) {
+					if (propertyEntry.getKey() instanceof String) {
+						entries.add(new Map.Entry<String, Object>() {
+							public String getKey() {
+								return propertyEntry.getKey().toString();
+							}
+
+							public Object getValue() {
+								return propertyEntry.getValue();
+							}
+
+							public Object setValue(Object value) {
+								throw new UnsupportedOperationException();
+							}
+						});
+					}
+				}
+				return entries;
+			}
+		};
 	}
 }

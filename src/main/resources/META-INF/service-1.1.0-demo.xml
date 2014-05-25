@@ -22,6 +22,9 @@
 		    	<property name="firstName" value="yang"/>
 		    </service>
     	</property>
+    	<configurer merge-env="true" merge-props="true">
+    		<item key="ssssssssssssss" value="wedsdssssssssssssdsdssdsd57462216"/>
+    	</configurer>
     </service>
     
     <!-- <service id="hello222" class="magic.service.HelloService">

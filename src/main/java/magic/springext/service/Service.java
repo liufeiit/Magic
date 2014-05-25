@@ -1,5 +1,7 @@
 package magic.springext.service;
 
+import org.apache.commons.configuration.Configuration;
+
 /**
  * 表示一个Service接口。
  * 

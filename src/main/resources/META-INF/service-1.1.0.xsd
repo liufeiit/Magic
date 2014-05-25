@@ -36,17 +36,44 @@
 				<xsd:element ref="replaced-method"/>
 				<xsd:any namespace="##other" processContents="strict" minOccurs="0" maxOccurs="unbounded"/>
 			</xsd:choice>
+			<xsd:choice minOccurs="0" maxOccurs="1">
+				<xsd:element ref="configurer"/>
+			</xsd:choice>
 		</xsd:sequence>
 	</xsd:group>
+	
+	<xsd:element name="configurer" type="configurerType"/>
+	
+	<xsd:complexType name="configurerType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element ref="item"/>
+		</xsd:choice>
+		<xsd:attribute name="merge-env" type="xsd:boolean" use="required"/>
+		<xsd:attribute name="merge-props" type="xsd:boolean" use="required"/>
+	</xsd:complexType>
+	
+	<xsd:element name="item" type="itemType"/>
+	
+	<xsd:complexType name="itemType">
+		<xsd:attribute name="key" type="xsd:string" use="required"/>
+		<xsd:attribute name="value" type="xsd:string" use="required"/>
+	</xsd:complexType>
 
 	<xsd:attributeGroup name="serviceAttributes">
 		<xsd:attribute name="name" type="xsd:string"/>
 		<xsd:attribute name="class" type="xsd:string"/>
 		<xsd:attribute name="parent" type="xsd:string"/>
-		<xsd:attribute name="scope" type="xsd:string"/>
+		<xsd:attribute name="scope" default="singleton">
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:NMTOKEN">
+					<xsd:enumeration value="singleton"/>
+					<xsd:enumeration value="prototype"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:attribute>
 		<xsd:attribute name="abstract" type="xsd:boolean"/>
 		<xsd:attribute name="lazy-init" default="default" type="defaultable-boolean"/>
-		<xsd:attribute name="autowire" default="default">
+		<xsd:attribute name="autowire" default="byName">
 			<xsd:simpleType>
 				<xsd:restriction base="xsd:NMTOKEN">
 					<xsd:enumeration value="default"/>
